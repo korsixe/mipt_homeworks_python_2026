@@ -36,7 +36,7 @@ def is_invalid_category(maybe_category: str) -> bool:
     return "," in maybe_category or "." in maybe_category or " " in maybe_category
 
 
-def is_correct_day(year: int, month: int, day: int ) -> bool:
+def is_correct_day(year: int, month: int, day: int) -> bool:
     if month < 1 or month > k12:
         return False
     if day < 1:
@@ -50,6 +50,7 @@ def is_correct_day(year: int, month: int, day: int ) -> bool:
 
     return day <= DAY_THIRTY_ONE
 
+
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     parts = maybe_dt.split("-")
     if len(parts) != k3:
@@ -61,6 +62,7 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     if is_correct_day(day, month, year):
         return year, month, day
     return None
+
 
 def extract_amount(maybe_amount: str) -> float | None:
     if not maybe_amount:
