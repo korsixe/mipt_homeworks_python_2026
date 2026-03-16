@@ -78,8 +78,6 @@ def extract_amount(maybe_amount: str) -> float | None:
 
   for char in maybe_amount:
     if char in [".", ","]:
-      if separate:
-        return None
       separate = True
     elif char.isdigit():
       digit = ord(char) - ord("0")
@@ -200,16 +198,14 @@ def main() -> None:
       details = query.split()
       command = query[0]
 
-      if command == "income":
-        if not find_erorr_income(details):
+      if command == "income" and not find_erorr_income(details):
           amount = extract_amount(details[1])
           date = extract_date(details[2])
           day, month, year = date
           incomes.append((amount, day, month, year))
           print(OP_SUCCESS_MSG)
 
-      if command == "cost":
-        if not find_error_cost(details):
+      if command == "cost" and not find_error_cost(details):
           category_name = details[1]
           amount = extract_amount(details[2])
           date = extract_date(details[3])
