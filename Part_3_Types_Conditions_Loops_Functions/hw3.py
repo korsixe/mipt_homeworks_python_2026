@@ -24,26 +24,26 @@ class Date:
         self.month: int = month
         self.year: int = year
 
-    def __le__(self, other: 'Date') -> bool:
+    def __le__(self, other: "Date") -> bool:
         if self.year != other.year:
             return self.year < other.year
         if self.month != other.month:
             return self.month < other.month
         return self.day <= other.day
 
-    def __eq__(self, other: 'Date') -> bool:
+    def __eq__(self, other: "Date") -> bool:
         return (self.year == other.year and
                 self.month == other.month and
                 self.day == other.day)
 
-    def same_month(self, other: 'Date') -> bool:
+    def same_month(self, other: "Date") -> bool:
         return self.year == other.year and self.month == other.month
 
     def to_tuple(self) -> tuple[int, int, int]:
         return (self.year, self.month, self.day)
 
     @staticmethod
-    def from_tuple(date_tuple: tuple[int, int, int]) -> 'Date':
+    def from_tuple(date_tuple: tuple[int, int, int]) -> "Date":
         year: int
         month: int
         day: int
@@ -139,6 +139,13 @@ def extract_amount(maybe_amount: str) -> float | None:
     return sign * float(maybe_amount)
 
 
+def income_handler(amount: float, income_date: Date) -> str:
+    day_str: str = f"{income_date.day:02d}"
+    month_str: str = f"{income_date.month:02d}"
+    year_str: str = f"{income_date.year:04d}"
+    return f"{OP_SUCCESS_MSG} {amount=} {day_str}-{month_str}-{year_str}"
+
+
 def format_detail_amount(value: float) -> str:
     result: str = f"{value:.10f}".rstrip("0").rstrip(".")
     return result or "0"
@@ -157,13 +164,15 @@ def get_incomes(date: Date, incomes: list[Income]) -> tuple[float, float]:
     return total_capital, month_income
 
 
-def update_category_cost(category_cost: dict[str, float], category: str, amount: float) -> None:
+def update_category_cost(category_cost: dict[str, float], category: str,
+    amount: float) -> None:
     if category not in category_cost:
         category_cost[category] = 0.0
     category_cost[category] += amount
 
 
-def get_cost(date: Date, costs: list[Cost]) -> tuple[float, float, dict[str, float]]:
+def get_cost(date: Date, costs: list[Cost]) -> tuple[
+    float, float, dict[str, float]]:
     total_capital: float = 0.0
     month_cost: float = 0.0
     category_cost: dict[str, float] = {}
@@ -235,6 +244,42 @@ def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
     print_category_stats(category_cost)
 
 
+def process_income_command(details: list[str], incomes: list[Income]) -> bool:
+    amount_str: str = details[1]
+    amount: float | None = extract_amount(amount_str)
+    date_str: str = details[2]
+    date: Date | None = extract_date(date_str)
+    if amount is not None and date is not None:
+        incomes.append(Income(amount, date))
+        print(income_handler(amount, date))
+        return True
+    return False
+
+
+def process_cost_command(details: list[str], costs: list[Cost]) -> bool:
+    category_name: str = details[1]
+    amount_str: str = details[2]
+    amount: float | None = extract_amount(amount_str)
+    date_str: str = details[3]
+    date: Date | None = extract_date(date_str)
+    if amount is not None and date is not None:
+        costs.append(Cost(category_name, amount, date))
+        print(OP_SUCCESS_MSG)
+        return True
+    return False
+
+
+def process_stats_command(details: list[str], incomes: list[Income],
+    costs: list[Cost]) -> bool:
+    date_str: str = details[1]
+    date: Date | None = extract_date(date_str)
+    if date is None:
+        print(INCORRECT_DATE_MSG)
+        return False
+    print_stats(date, incomes, costs)
+    return True
+
+
 def find_error_income(details: list[str]) -> bool:
     if len(details) != k3:
         print(UNKNOWN_COMMAND_MSG)
@@ -301,35 +346,17 @@ def main() -> None:
         if command == "income":
             if find_error_income(details):
                 continue
-            amount_str: str = details[1]
-            amount: float | None = extract_amount(amount_str)
-            date_str: str = details[2]
-            date: Date | None = extract_date(date_str)
-            if amount is not None and date is not None:
-                incomes.append(Income(amount, date))
-                print(OP_SUCCESS_MSG)
+            process_income_command(details, incomes)
             continue
 
         if command == "cost":
             if find_error_cost(details):
                 continue
-            category_name: str = details[1]
-            amount_str: str = details[2]
-            amount: float | None = extract_amount(amount_str)
-            date_str: str = details[3]
-            date: Date | None = extract_date(date_str)
-            if amount is not None and date is not None:
-                costs.append(Cost(category_name, amount, date))
-                print(OP_SUCCESS_MSG)
+            process_cost_command(details, costs)
             continue
 
         if command == "stats":
-            date_str: str = details[1]
-            date: Date | None = extract_date(date_str)
-            if date is None:
-                print(INCORRECT_DATE_MSG)
-            else:
-                print_stats(date, incomes, costs)
+            process_stats_command(details, incomes, costs)
             continue
 
 
