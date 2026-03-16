@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from Part_3_Types_Conditions_Loops_Functions.lecture_3 import result
 
 UNKNOWN_COMMAND_MSG = "Unknown command!"
 NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
@@ -7,6 +8,10 @@ OP_SUCCESS_MSG = "Added"
 DAYS_IN_MOUNTH_LONG_YEAR = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 DAYS_IN_MOUNTH_BASE_YEAR = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
+k3 = 3
+k4 = 4
+k10 = 10
+k12 = 12
 
 def is_leap_year(year: int) -> bool:
   """
@@ -20,13 +25,7 @@ def is_leap_year(year: int) -> bool:
 
 
 def is_invalid_category(maybe_category: str) -> bool:
-  if " " in maybe_category:
-    return True
-  if "." in maybe_category:
-    return True
-  if "," in maybe_category:
-    return True
-  return False
+  return "," in maybe_category or "." in maybe_category or " " in maybe_category
 
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
@@ -38,15 +37,15 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
   :rtype: tuple[int, int, int] | None
   """
   parts = maybe_dt.split("-")
-  if len(parts) != 3:
+  if len(parts) != k3:
     return None
 
   year = int(parts[0])
   month = int(parts[1])
   day = int(parts[2])
-  if (month < 1 or month > 12):
+  if month < 1 or month > k12:
     return None
-  if (day < 1 or day > 31):
+  if day < 1:
     return None
 
   if is_leap_year(year) and day > DAYS_IN_MOUNTH_LONG_YEAR[month - 1]:
@@ -60,14 +59,14 @@ def extract_amount(maybe_amount: str) -> float | None:
   if not maybe_amount:
     return None
 
-  if maybe_amount.count(',') + maybe_amount.count('.') > 1:
+  if maybe_amount.count(",") + maybe_amount.count(".") > 1:
     return None
 
   sign = 1
-  if maybe_amount[0] == '-':
+  if maybe_amount[0] == "-":
     sign = -1
     maybe_amount = maybe_amount[1:]
-  elif maybe_amount[0] == '+':
+  elif maybe_amount[0] == "+":
     maybe_amount = maybe_amount[1:]
 
   if not maybe_amount:
@@ -85,18 +84,18 @@ def extract_amount(maybe_amount: str) -> float | None:
     elif char.isdigit():
       digit = ord(char) - ord("0")
       if separate:
-        fractional = fractional * 10 + digit
+        fractional = fractional * k10 + digit
       else:
-        integer = integer * 10 + digit
+        integer = integer * k10 + digit
     else:
       return None
 
-  if fractional == 0 and integer == 0:
-    return 0.0
-
+  result = 0.0
   if fractional > 0:
-    return sign * (integer + fractional / (10 ** len(str(fractional))))
-  return sign * integer
+    result =  sign * (integer + fractional / (10 ** len(str(fractional))))
+  else:
+    result = sign * integer
+  return result
 
 
 def income_handler(amount: float, income_date: str) -> str:
@@ -151,6 +150,44 @@ def print_stats(date: tuple[int, int, int],
     category = sorted_categories[index]
     print(f"{index + 1}. {category}: {format_detail_amount(sorted_categories[category])}")
 
+
+def find_erorr_income(details: list[str]) -> bool:
+  if len(details) != 3:
+    print(UNKNOWN_COMMAND_MSG)
+    return True
+
+  amount = extract_amount(details[1])
+  if amount is None or amount < 0:
+    print(NONPOSITIVE_VALUE_MSG)
+    return True
+
+  date = extract_date(details[2])
+  if date is None:
+    print(INCORRECT_DATE_MSG)
+    return True
+  return False
+
+def find_error_cost(details: list[str]) -> bool:
+  if len(details) != 4:
+    print(UNKNOWN_COMMAND_MSG)
+    return True
+
+  category_name = details[1]
+  if is_invalid_category(category_name):
+    print(UNKNOWN_COMMAND_MSG)
+    return True
+
+  amount = extract_amount(details[2])
+  if amount is None or amount <= 0:
+    print(NONPOSITIVE_VALUE_MSG)
+    return True
+
+  date = extract_date(details[3])
+  if date is None:
+    print(INCORRECT_DATE_MSG)
+    return True
+  return False
+
 def main() -> None:
   incomes = []
   costs = []
@@ -164,47 +201,21 @@ def main() -> None:
     command = line[0]
 
     if command == "income":
-      if len(details) != 3:
-        print(UNKNOWN_COMMAND_MSG)
-        continue
-
-      amount = extract_amount(details[1])
-      if amount is None or amount < 0:
-        print(NONPOSITIVE_VALUE_MSG)
-        continue
-
-      date = extract_date(details[2])
-      if date is None:
-        print(INCORRECT_DATE_MSG)
-        continue
-
-      day, month, year = date
-      incomes.append((amount, day, month, year))
-      print(OP_SUCCESS_MSG)
+      if not find_erorr_income(details):
+        amount = extract_amount(details[1])
+        date = extract_date(details[2])
+        day, month, year = date
+        incomes.append((amount, day, month, year))
+        print(OP_SUCCESS_MSG)
 
     if command == "cost":
-      if len(details) != 4:
-        print(UNKNOWN_COMMAND_MSG)
-        continue
-
-      category_name = details[1]
-      if is_invalid_category(category_name):
-        print(UNKNOWN_COMMAND_MSG)
-        continue
-
-      amount = extract_amount(details[2])
-      if amount is None or amount <= 0:
-        print(NONPOSITIVE_VALUE_MSG)
-        continue
-
-      date = extract_date(details[3])
-      if date is None:
-        print(INCORRECT_DATE_MSG)
-        continue
-
-      day, month, year = date
-      costs.append((category_name, amount, day, month, year))
-      print(OP_SUCCESS_MSG)
+      if not find_error_cost(details):
+        category_name = details[1]
+        amount = extract_amount(details[2])
+        date = extract_date(details[3])
+        day, month, year = date
+        costs.append((category_name, amount, day, month, year))
+        print(OP_SUCCESS_MSG)
 
     if command == "stats":
       date = extract_date(details[1])
