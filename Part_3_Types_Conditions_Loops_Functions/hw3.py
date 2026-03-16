@@ -56,16 +56,9 @@ class Date:
     def same_month(self, other: "Date") -> bool:
         return self.year == other.year and self.month == other.month
 
-    def to_tuple(self) -> tuple[int, int, int]:
-        return (self.year, self.month, self.day)
-
     @classmethod
     def from_tuple(cls, date_tuple: tuple[int, int, int]) -> "Date":
-        year: int
-        month: int
-        day: int
-        year, month, day = date_tuple
-        return cls(day, month, year)
+        return cls(date_tuple[2], date_tuple[1], date_tuple[0])
 
 
 class Income:
@@ -101,14 +94,11 @@ def is_correct_day(day: int, month: int, year: int) -> bool:
         return False
     if day < 1:
         return False
-
     if month in THIRTY_DAY_MONTHS:
         return day <= DAY_THIRTY
-
     if month == INDEX_FEBRUARY:
         max_days: int = DAY_FEBRUARY + is_leap_year(year)
         return day <= max_days
-
     return day <= DAY_THIRTY_ONE
 
 
@@ -116,7 +106,6 @@ def extract_date(maybe_dt: str) -> Date | None:
     parts: list[str] = maybe_dt.split("-")
     if len(parts) != k3:
         return None
-
     day: int = int(parts[0])
     month: int = int(parts[1])
     year: int = int(parts[2])
@@ -131,22 +120,18 @@ def extract_amount(maybe_amount: str) -> float | None:
     processed: str = maybe_amount.replace(",", ".")
     if processed.count(".") > 1:
         return None
-
     sign: int = 1
     if processed[0] == "-":
         sign = -1
         processed = processed[1:]
     elif processed[0] == "+":
         processed = processed[1:]
-
     if not processed:
         return None
-
     for ch in processed:
         if ch != "." and not ch.isdigit():
             return None
     return sign * float(processed)
-
 
 
 def format_detail_amount(value: float) -> str:
@@ -154,10 +139,9 @@ def format_detail_amount(value: float) -> str:
     return result or "0"
 
 
-def sum_incomes_up_to_date(date: Date, incomes: list[Income]) -> tuple[float, float]:
+def sum_incomes(date: Date, incomes: list[Income]) -> tuple[float, float]:
     total: float = 0
     monthly: float = 0
-
     for inc in incomes:
         if inc.date <= date:
             total += inc.amount
@@ -166,139 +150,131 @@ def sum_incomes_up_to_date(date: Date, incomes: list[Income]) -> tuple[float, fl
     return total, monthly
 
 
-def add_to_category(cat_dict: dict[str, float], cat: str, val: float) -> None:
+def _update_cat(cat_dict: dict[str, float], cat: str, val: float) -> None:
     if cat not in cat_dict:
         cat_dict[cat] = 0
     cat_dict[cat] += val
 
 
-def sum_costs_up_to_date(date: Date, costs: list[Cost]) -> tuple[float, float, dict[str, float]]:
+def sum_costs(date: Date, costs: list[Cost]) -> tuple[float, float, dict[str, float]]:
     total: float = 0
     monthly: float = 0
-    by_category: dict[str, float] = {}
-
+    by_cat: dict[str, float] = {}
     for cst in costs:
         if cst.date <= date:
             total += cst.amount
             if cst.date.same_month(date):
                 monthly += cst.amount
-                add_to_category(by_category, cst.category, cst.amount)
+                _update_cat(by_cat, cst.category, cst.amount)
+    return total, monthly, by_cat
 
-    return total, monthly, by_category
+
+def _print_header(dt: Date) -> None:
+    print(f"Your statistics on {dt.day:02d}-{dt.month:02d}-{dt.year:04d}:")
 
 
-def display_monthly_stats(
-    dt: Date,
-    capital: float,
-    inc_month: float,
-    cost_month: float
-) -> None:
-    day_str: str = f"{dt.day:02d}"
-    month_str: str = f"{dt.month:02d}"
-    year_str: str = f"{dt.year:04d}"
-    print(f"Your statistics on {day_str}-{month_str}-{year_str}:")
+def _print_capital(capital: float) -> None:
     print(f"Total capital: {capital:.2f} рублей")
-    delta: float = inc_month - cost_month
 
+
+def _print_delta(inc: float, cost: float) -> None:
+    delta: float = inc - cost
     if delta >= 0:
-        formatted: str = f"{delta:.2f}"
-        print(f"In this month the profit was {formatted} рублей")
+        print(f"In this month the profit was {delta:.2f} рублей")
     else:
-        loss: float = -delta
-        formatted_loss: str = f"{loss:.2f}"
-        print(f"In this month the loss was {formatted_loss} рублей")
+        print(f"In this month the loss was {(-delta):.2f} рублей")
 
-    print(f"Income: {inc_month:.2f} рублей")
-    print(f"Cost: {cost_month:.2f} рублей")
+
+def _print_income_cost(inc: float, cost: float) -> None:
+    print(f"Income: {inc:.2f} рублей")
+    print(f"Cost: {cost:.2f} рублей")
     print()
 
 
+def display_monthly_stats(dt: Date, capital: float, inc: float, cost: float) -> None:
+    _print_header(dt)
+    _print_capital(capital)
+    _print_delta(inc, cost)
+    _print_income_cost(inc, cost)
+
+
 def show_category_breakdown(cat_data: dict[str, float]) -> None:
-    print("Details (category: sum):")
+    print("Details (category):")
     if not cat_data:
         return
-
-    sorted_cats: list[tuple[str, float]] = sorted(cat_data.items())
-    for pos, (cat, val) in enumerate(sorted_cats):
-        formatted: str = format_detail_amount(val)
-        idx: int = pos + 1
-        print(f"{idx}. {cat}: {formatted}")
+    for pos, (cat, val) in enumerate(sorted(cat_data.items())):
+        print(f"{pos + 1}. {cat}: {format_detail_amount(val)}")
 
 
 def show_full_stats(dt: Date, inc_list: list[Income], cst_list: list[Cost]) -> None:
-    total_inc, month_inc = sum_incomes_up_to_date(dt, inc_list)
-    total_cst, month_cst, cat_data = sum_costs_up_to_date(dt, cst_list)
-    total_cap: float = total_inc - total_cst
-    display_monthly_stats(dt, total_cap, month_inc, month_cst)
-    show_category_breakdown(cat_data)
+    ti, mi = sum_incomes(dt, inc_list)
+    tc, mc, cats = sum_costs(dt, cst_list)
+    display_monthly_stats(dt, ti - tc, mi, mc)
+    show_category_breakdown(cats)
+
+
+def _validate_income(details: list[str]) -> tuple[float | None, Date | None]:
+    if len(details) != k3:
+        print(UNKNOWN_COMMAND_MSG)
+        return None, None
+    amount: float | None = extract_amount(details[1])
+    if amount is None or amount < 0:
+        print(NONPOSITIVE_VALUE_MSG)
+        return None, None
+    date: Date | None = extract_date(details[2])
+    if date is None:
+        print(INCORRECT_DATE_MSG)
+        return None, None
+    return amount, date
+
+
+def _validate_cost(details: list[str]) -> tuple[str | None, float | None, Date | None]:
+    if len(details) != k4:
+        print(UNKNOWN_COMMAND_MSG)
+        return None, None, None
+    cat: str = details[1]
+    if is_invalid_category(cat):
+        print(UNKNOWN_COMMAND_MSG)
+        return None, None, None
+    amount: float | None = extract_amount(details[2])
+    if amount is None or amount <= 0:
+        print(NONPOSITIVE_VALUE_MSG)
+        return None, None, None
+    date: Date | None = extract_date(details[3])
+    if date is None:
+        print(INCORRECT_DATE_MSG)
+        return None, None, None
+    return cat, amount, date
 
 
 def handle_income(details: list[str], storage: list[Income]) -> bool:
-    value: float | None = extract_amount(details[1])
-    dt_obj: Date | None = extract_date(details[2])
-    if value is not None and dt_obj is not None:
-        storage.append(Income(value, dt_obj))
-        print(OP_SUCCESS_MSG)
-        return True
-    return False
-
-
-def handle_cost(details: list[str], storage: list[Cost]) -> bool:
-    value: float | None = extract_amount(details[2])
-    dt_obj: Date | None = extract_date(details[3])
-    if value is not None and dt_obj is not None:
-        storage.append(Cost(details[1], value, dt_obj))
-        print(OP_SUCCESS_MSG)
-        return True
-    return False
-
-
-def handle_stats(details: list[str], inc_list: list[Income], cst_list: list[Cost]) -> bool:
-    dt_obj: Date | None = extract_date(details[1])
-    if dt_obj is None:
-        print(INCORRECT_DATE_MSG)
+    amount, date = _validate_income(details)
+    if amount is None or date is None:
         return False
-    show_full_stats(dt_obj, inc_list, cst_list)
+    storage.append(Income(amount, date))
+    print(OP_SUCCESS_MSG)
     return True
 
 
-def validate_income(details: list[str]) -> bool:
-    if len(details) != k3:
-        print(UNKNOWN_COMMAND_MSG)
-        return True
+def handle_cost(details: list[str], storage: list[Cost]) -> bool:
+    cat, amount, date = _validate_cost(details)
+    if cat is None or amount is None or date is None:
+        return False
+    storage.append(Cost(cat, amount, date))
+    print(OP_SUCCESS_MSG)
+    return True
 
-    amount_val: float | None = extract_amount(details[1])
-    if amount_val is None or amount_val < 0:
-        print(NONPOSITIVE_VALUE_MSG)
-        return True
 
-    date_val: Date | None = extract_date(details[2])
-    if date_val is None:
+def handle_stats(details: list[str], inc_list: list[Income], cst_list: list[Cost]) -> bool:
+    if len(details) != 2:
         print(INCORRECT_DATE_MSG)
-        return True
-    return False
-
-
-def validate_cost(details: list[str]) -> bool:
-    if len(details) != k4:
-        print(UNKNOWN_COMMAND_MSG)
-        return True
-
-    category: str = details[1]
-    if is_invalid_category(category):
-        print(UNKNOWN_COMMAND_MSG)
-        return True
-
-    amount_val: float | None = extract_amount(details[2])
-    if amount_val is None or amount_val <= 0:
-        print(NONPOSITIVE_VALUE_MSG)
-        return True
-
-    date_val: Date | None = extract_date(details[3])
-    if date_val is None:
+        return False
+    date: Date | None = extract_date(details[1])
+    if date is None:
         print(INCORRECT_DATE_MSG)
-        return True
-    return False
+        return False
+    show_full_stats(date, inc_list, cst_list)
+    return True
 
 
 def main() -> None:
@@ -306,32 +282,20 @@ def main() -> None:
     costs: list[Cost] = []
 
     while True:
-        raw: str = input().strip()
-        if not raw:
+        line: str = input().strip()
+        if not line:
             break
-
-        cleaned: str = raw.strip()
-        if not cleaned:
-            print(UNKNOWN_COMMAND_MSG)
-            continue
-
-        tokens: list[str] = cleaned.split()
+        tokens: list[str] = line.split()
         cmd: str = tokens[0]
 
-        if cmd not in COMMAND:
-            print(UNKNOWN_COMMAND_MSG)
-            continue
-
         if cmd == "income":
-            if not validate_income(tokens):
-                handle_income(tokens, incomes)
-
+            handle_income(tokens, incomes)
         elif cmd == "cost":
-            if not validate_cost(tokens):
-                handle_cost(tokens, costs)
-
+            handle_cost(tokens, costs)
         elif cmd == "stats":
             handle_stats(tokens, incomes, costs)
+        else:
+            print(UNKNOWN_COMMAND_MSG)
 
 
 if __name__ == "__main__":
