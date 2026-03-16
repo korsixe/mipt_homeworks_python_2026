@@ -12,6 +12,7 @@ k3: int = 3
 k4: int = 4
 k10: int = 10
 k12: int = 12
+LEN_DETAILS = 2
 INDEX_FEBRUARY: int = 2
 DAY_FEBRUARY: int = 28
 DAY_THIRTY: int = 30
@@ -266,7 +267,7 @@ def handle_cost(details: list[str], storage: list[Cost]) -> bool:
 
 
 def handle_stats(details: list[str], inc_list: list[Income], cst_list: list[Cost]) -> bool:
-    if len(details) != 2:
+    if len(details) != LEN_DETAILS:
         print(INCORRECT_DATE_MSG)
         return False
     date: Date | None = extract_date(details[1])
