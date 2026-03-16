@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from Part_3_Types_Conditions_Loops_Functions.lecture_3 import result
 
 UNKNOWN_COMMAND_MSG = "Unknown command!"
 NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
@@ -12,6 +11,7 @@ k3 = 3
 k4 = 4
 k10 = 10
 k12 = 12
+
 
 def is_leap_year(year: int) -> bool:
   """
@@ -90,12 +90,8 @@ def extract_amount(maybe_amount: str) -> float | None:
     else:
       return None
 
-  result = 0.0
-  if fractional > 0:
-    result =  sign * (integer + fractional / (10 ** len(str(fractional))))
-  else:
-    result = sign * integer
-  return result
+  return sign * (integer + fractional / 10 ** len(
+    str(fractional))) if fractional > 0 else sign * integer
 
 
 def income_handler(amount: float, income_date: str) -> str:
@@ -148,7 +144,8 @@ def print_stats(date: tuple[int, int, int],
   sorted_categories = sorted(category_cost.keys())
   for index in range(len(sorted_categories)):
     category = sorted_categories[index]
-    print(f"{index + 1}. {category}: {format_detail_amount(sorted_categories[category])}")
+    print(
+      f"{index + 1}. {category}: {format_detail_amount(sorted_categories[category])}")
 
 
 def find_erorr_income(details: list[str]) -> bool:
@@ -166,6 +163,7 @@ def find_erorr_income(details: list[str]) -> bool:
     print(INCORRECT_DATE_MSG)
     return True
   return False
+
 
 def find_error_cost(details: list[str]) -> bool:
   if len(details) != 4:
@@ -187,6 +185,7 @@ def find_error_cost(details: list[str]) -> bool:
     print(INCORRECT_DATE_MSG)
     return True
   return False
+
 
 def main() -> None:
   incomes = []
@@ -223,6 +222,7 @@ def main() -> None:
         print(INCORRECT_DATE_MSG)
         continue
       print_stats(date, incomes, costs)
+
 
 if __name__ == "__main__":
   main()
