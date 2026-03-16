@@ -155,8 +155,8 @@ def format_detail_amount(value: float) -> str:
 
 
 def get_incomes(date: Date, incomes: list[Income]) -> tuple[float, float]:
-    total_capital: float = 0.0
-    month_income: float = 0.0
+    total_capital: float = 0
+    month_income: float = 0
 
     income: Income
     for income in incomes:
@@ -170,14 +170,14 @@ def get_incomes(date: Date, incomes: list[Income]) -> tuple[float, float]:
 def update_category_cost(category_cost: dict[str, float], category: str,
     amount: float) -> None:
     if category not in category_cost:
-        category_cost[category] = 0.0
+        category_cost[category] = 0
     category_cost[category] += amount
 
 
 def get_cost(date: Date, costs: list[Cost]) -> tuple[
     float, float, dict[str, float]]:
-    total_capital: float = 0.0
-    month_cost: float = 0.0
+    total_capital: float = 0
+    month_cost: float = 0
     category_cost: dict[str, float] = {}
 
     cost: Cost
@@ -344,23 +344,19 @@ def main() -> None:
 
         if command not in COMMAND:
             print(UNKNOWN_COMMAND_MSG)
-            continue
 
         if command == "income":
             if find_error_income(details):
                 continue
             process_income_command(details, incomes)
-            continue
 
         if command == "cost":
             if find_error_cost(details):
                 continue
             process_cost_command(details, costs)
-            continue
 
         if command == "stats":
             process_stats_command(details, incomes, costs)
-            continue
 
 
 if __name__ == "__main__":
