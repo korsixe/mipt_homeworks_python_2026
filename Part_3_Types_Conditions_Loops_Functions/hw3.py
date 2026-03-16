@@ -96,9 +96,11 @@ def format_detail_amount(value: float) -> str:
     return result or "0"
 
 
-def print_stats(date: tuple[int, int, int],
+def print_stats(
+    date: tuple[int, int, int],
     incomes: list[tuple[float, int, int, int]],
     costs: list[tuple[str, float, int, int, int]]) -> None:
+
     day, month, year = date
     total_capital: float = 0
     month_cost: float = 0
