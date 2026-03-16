@@ -213,6 +213,5 @@ def main() -> None:
         continue
       print_stats(date, incomes, costs)
 
-
 if __name__ == "__main__":
   main()
