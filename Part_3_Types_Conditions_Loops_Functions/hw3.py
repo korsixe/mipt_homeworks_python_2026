@@ -36,6 +36,9 @@ class Date:
                 self.month == other.month and
                 self.day == other.day)
 
+    def __hash__(self) -> int:
+        return hash((self.year, self.month, self.day))
+
     def same_month(self, other: "Date") -> bool:
         return self.year == other.year and self.month == other.month
 
