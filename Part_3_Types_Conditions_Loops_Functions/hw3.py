@@ -4,8 +4,6 @@ UNKNOWN_COMMAND_MSG = "Unknown command!"
 NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
 INCORRECT_DATE_MSG = "Invalid date!"
 OP_SUCCESS_MSG = "Added"
-DAYS_IN_MOUNTH_LONG_YEAR = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-DAYS_IN_MOUNTH_BASE_YEAR = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 k3 = 3
 k4 = 4
@@ -29,13 +27,8 @@ def is_invalid_category(maybe_category: str) -> bool:
 
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
-    """
-    Парсит дату формата DD-MM-YYYY из строки.
+    days_in_mounth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
-    :param str maybe_dt: Проверяемая строка
-    :return: typle формата (день, месяц, год) или None, если дата неправильная.
-    :rtype: tuple[int, int, int] | None
-    """
     parts = maybe_dt.split("-")
     if len(parts) != k3:
         return None
@@ -47,10 +40,10 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
         return None
     if day < 1:
         return None
+    if is_leap_year(year):
+        days_in_mounth[1] += 1
 
-    if is_leap_year(year) and day > DAYS_IN_MOUNTH_LONG_YEAR[month - 1]:
-        return None
-    if not (is_leap_year(year)) and day > DAYS_IN_MOUNTH_BASE_YEAR[month - 1]:
+    if day > days_in_mounth[month - 1]:
         return None
     return year, month, day
 
