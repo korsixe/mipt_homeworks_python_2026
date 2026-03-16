@@ -16,6 +16,7 @@ INDEX_FEBRUARY: int = 2
 DAY_FEBRUARY: int = 28
 DAY_THIRTY: int = 30
 DAY_THIRTY_ONE: int = 31
+STATS_ARGS_COUNT: int = 2
 
 
 class Date:
@@ -55,10 +56,6 @@ class Date:
 
     def same_month(self, other: "Date") -> bool:
         return self.year == other.year and self.month == other.month
-
-    @classmethod
-    def from_tuple(cls, date_tuple: tuple[int, int, int]) -> "Date":
-        return cls(date_tuple[2], date_tuple[1], date_tuple[0])
 
 
 class Income:
@@ -156,7 +153,13 @@ def _update_cat(cat_dict: dict[str, float], cat: str, val: float) -> None:
     cat_dict[cat] += val
 
 
-def _process_cost_item(cst: Cost, date: Date, total: float, monthly: float, by_cat: dict[str, float]) -> tuple[float, float]:
+def _process_cost_item(
+    cst: Cost,
+    date: Date,
+    total: float,
+    monthly: float,
+    by_cat: dict[str, float]
+) -> tuple[float, float]:
     total += cst.amount
     if cst.date.same_month(date):
         monthly += cst.amount
@@ -241,74 +244,60 @@ def _check_cost_len(details: list[str]) -> bool:
     return True
 
 
-def _validate_income_amount(amount: float | None) -> bool:
-    if amount is None or amount < 0:
+def _get_validated_income(details: list[str]) -> tuple[float, Date] | None:
+    if not _check_income_len(details):
+        return None
+    amount_val: float | None = extract_amount(details[1])
+    if amount_val is None or amount_val < 0:
         print(NONPOSITIVE_VALUE_MSG)
-        return False
-    return True
-
-
-def _validate_income_date(date: Date | None) -> bool:
-    if date is None:
+        return None
+    date_val: Date | None = extract_date(details[2])
+    if date_val is None:
         print(INCORRECT_DATE_MSG)
-        return False
-    return True
+        return None
+    return (amount_val, date_val)
 
 
-def _validate_cost_category(cat: str) -> bool:
-    if is_invalid_category(cat):
+def _get_validated_cost(details: list[str]) -> tuple[str, float, Date] | None:
+    if not _check_cost_len(details):
+        return None
+    cat_val: str = details[1]
+    if is_invalid_category(cat_val):
         print(UNKNOWN_COMMAND_MSG)
-        return False
-    return True
-
-
-def _validate_cost_amount(amount: float | None) -> bool:
-    if amount is None or amount <= 0:
+        return None
+    amount_val: float | None = extract_amount(details[2])
+    if amount_val is None or amount_val <= 0:
         print(NONPOSITIVE_VALUE_MSG)
-        return False
-    return True
-
-
-def _validate_cost_date(date: Date | None) -> bool:
-    if date is None:
+        return None
+    date_val: Date | None = extract_date(details[3])
+    if date_val is None:
         print(INCORRECT_DATE_MSG)
-        return False
-    return True
+        return None
+    return (cat_val, amount_val, date_val)
 
 
 def handle_income(details: list[str], storage: list[Income]) -> bool:
-    if not _check_income_len(details):
+    validated: tuple[float, Date] | None = _get_validated_income(details)
+    if validated is None:
         return False
-    amount: float | None = extract_amount(details[1])
-    if not _validate_income_amount(amount):
-        return False
-    date: Date | None = extract_date(details[2])
-    if not _validate_income_date(date):
-        return False
+    amount, date = validated
     storage.append(Income(amount, date))
     print(OP_SUCCESS_MSG)
     return True
 
 
 def handle_cost(details: list[str], storage: list[Cost]) -> bool:
-    if not _check_cost_len(details):
+    validated: tuple[str, float, Date] | None = _get_validated_cost(details)
+    if validated is None:
         return False
-    cat: str = details[1]
-    if not _validate_cost_category(cat):
-        return False
-    amount: float | None = extract_amount(details[2])
-    if not _validate_cost_amount(amount):
-        return False
-    date: Date | None = extract_date(details[3])
-    if not _validate_cost_date(date):
-        return False
+    cat, amount, date = validated
     storage.append(Cost(cat, amount, date))
     print(OP_SUCCESS_MSG)
     return True
 
 
 def handle_stats(details: list[str], inc_list: list[Income], cst_list: list[Cost]) -> bool:
-    if len(details) != 2:
+    if len(details) != STATS_ARGS_COUNT:
         print(INCORRECT_DATE_MSG)
         return False
     date: Date | None = extract_date(details[1])
