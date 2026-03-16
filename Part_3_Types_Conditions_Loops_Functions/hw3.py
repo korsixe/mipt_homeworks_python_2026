@@ -11,6 +11,10 @@ k3 = 3
 k4 = 4
 k10 = 10
 k12 = 12
+INDEX_FEBRUARY = 1
+DAY_FEBRUARY = 28
+DAY_THIRTY = 30
+DAY_THIRTY_ONE = 31
 
 
 def is_leap_year(year: int) -> bool:
@@ -39,12 +43,12 @@ def is_correct_day(year: int, month: int, day: int ) -> bool:
         return False
 
     if month in THIRTY_DAY_MONTHS:
-        return month <= 30
+        return month <= DAY_THIRTY
 
-    if month == 1:
-        return day <= 28 + is_leap_year(year)
+    if month == INDEX_FEBRUARY:
+        return day <= DAY_FEBRUARY + is_leap_year(year)
 
-    return day <= 31
+    return day <= DAY_THIRTY_ONE
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     parts = maybe_dt.split("-")
