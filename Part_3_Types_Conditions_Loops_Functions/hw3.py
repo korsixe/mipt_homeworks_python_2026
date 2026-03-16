@@ -5,6 +5,8 @@ NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
 INCORRECT_DATE_MSG = "Invalid date!"
 OP_SUCCESS_MSG = "Added"
 
+THIRTY_DAY_MONTHS = (4, 6, 9, 11)
+
 k3 = 3
 k4 = 4
 k10 = 10
@@ -30,9 +32,21 @@ def is_invalid_category(maybe_category: str) -> bool:
     return "," in maybe_category or "." in maybe_category or " " in maybe_category
 
 
-def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
-    day_in_mounth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+def is_correct_day(year: int, month: int, day: int ) -> bool:
+    if month < 1 or month > k12:
+        return False
+    if day < 1:
+        return False
 
+    if month in THIRTY_DAY_MONTHS:
+        return month <= 30
+
+    if month == 1:
+        return day <= 28 + is_leap_year(year)
+
+    return day <= 31
+
+def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     parts = maybe_dt.split("-")
     if len(parts) != k3:
         return None
@@ -40,17 +54,9 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     year = int(parts[0])
     month = int(parts[1])
     day = int(parts[2])
-    if month < 1 or month > k12:
-        return None
-    if day < 1:
-        return None
-    if is_leap_year(year):
-        day_in_mounth[1] += 1
-
-    if day > day_in_mounth[month - 1]:
-        return None
-    return year, month, day
-
+    if is_correct_day(day, month, year):
+        return year, month, day
+    return None
 
 def extract_amount(maybe_amount: str) -> float | None:
     if not maybe_amount:
