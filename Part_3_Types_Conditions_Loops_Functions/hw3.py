@@ -232,7 +232,7 @@ def main() -> None:
         details = query.split()
         command = details[0]
 
-        if not command in COMMAND:
+        if command not in COMMAND:
             print(UNKNOWN_COMMAND_MSG)
             continue
 
