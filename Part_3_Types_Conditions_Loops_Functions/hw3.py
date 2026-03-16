@@ -96,54 +96,117 @@ def format_detail_amount(value: float) -> str:
     return result or "0"
 
 
-def print_stats(
-    date: tuple[int, int, int],
-    incomes: list[tuple[float, int, int, int]],
-    costs: list[tuple[str, float, int, int, int]]) -> None:
+def calculate_totals_by_date(
+    items: list,
+    target_date: tuple[int, int, int],
+    is_income: bool = True) -> tuple[float, float]:
+    """
+    Вычисляет общую сумму и сумму за указанный месяц.
 
-    day, month, year = date
-    total_capital: float = 0
-    month_cost: float = 0
-    month_income: float = 0
-    category_cost = {}
+    Args:
+        items: список транзакций
+        target_date: целевая дата (день, месяц, год)
+        is_income: True для доходов, False для расходов
 
-    for amount, cur_day, cur_month, cur_year in incomes:
-        if (cur_year, cur_month, cur_day) < (year, month, day):
-            total_capital += amount
+    Returns:
+        (total_amount, monthly_amount)
+    """
+    total = 0.0
+    monthly = 0.0
+    day, month, year = target_date
+
+    for item in items:
+        if is_income:
+            amount, cur_day, cur_month, cur_year = item
+        else:
+            category, amount, cur_day, cur_month, cur_year = item
+
+        if (cur_year, cur_month, cur_day) < target_date:
+            total += amount
             if cur_year == year or cur_month == month:
-                month_income += amount
+                monthly += amount
+
+    return total, monthly
+
+
+def process_cost_categories(
+    costs: list,
+    target_date: tuple[int, int, int]) -> dict:
+    """
+    Обрабатывает расходы по категориям.
+
+    Args:
+        costs: список расходов
+        target_date: целевая дата
+
+    Returns:
+        словарь с суммами по категориям
+    """
+    categories = {}
+    year, month, _ = target_date
 
     for category, amount, cur_day, cur_month, cur_year in costs:
-        if (cur_year, cur_month, cur_day) < (year, month, day):
-            total_capital -= amount
+        if (cur_year, cur_month, cur_day) < target_date:
             if cur_year == year or cur_month == month:
-                month_cost += amount
-                if category not in category_cost:
-                    category_cost[category]: float = 0
-                category_cost[category] += amount
+                categories[category] = categories.get(category, 0.0) + amount
 
-    delta = month_income - month_cost
-    print(f"Your statistics on {day:02d}-{month:02d}-{year:04d}:")
-    print(f"Total capital: {total_capital:.2f} рублей")
+    return categories
+
+
+def format_amount(amount: float) -> str:
+    return f"{amount:.2f}"
+
+
+def print_period_stats(
+    total_capital: float,
+    month_income: float,
+    month_cost: float,
+    delta: float) -> None:
+    """Печатает статистику за период."""
+    print(f"Total capital: {format_amount(total_capital)} рублей")
 
     if delta >= 0:
-        formatted_delta = f"{delta:.2f}"
-        print(f"In this month the profit was {formatted_delta} рублей")
+        print(f"In this month the profit was {format_amount(delta)} рублей")
     else:
-        loss_amount = -delta
-        formatted_loss = f"{loss_amount:.2f}"
-        print(f"In this month the loss was {formatted_loss} рублей")
+        print(f"In this month the loss was {format_amount(-delta)} рублей")
 
-    print(f"Income: {month_income:.2f} рублей")
-    print(f"Cost: {month_cost:.2f} рублей")
+    print(f"Income: {format_amount(month_income)} рублей")
+    print(f"Cost: {format_amount(month_cost)} рублей")
+
+
+def print_category_stats(categories: dict) -> None:
+    """Печатает статистику по категориям."""
     print()
     print("Details (category: sum):")
 
-    sorted_categories = sorted(category_cost.keys())
-    for idx, (category, amount) in enumerate(sorted_categories.items()):
+    sorted_categories = sorted(categories.items())
+    for idx, (category, amount) in enumerate(sorted_categories):
         formatted_amount = format_detail_amount(amount)
         line_index = idx + 1
         print(f"{line_index}. {category}: {formatted_amount}")
+
+
+def print_stats(date: tuple[int, int, int], incomes: list, costs: list) -> None:
+    """
+    Печатает полную статистику.
+
+    Args:
+        date: текущая дата (день, месяц, год)
+        incomes: список доходов
+        costs: список расходов
+    """
+    day, month, year = date
+
+    total_income, month_income = calculate_totals_by_date(incomes, date, True)
+    total_cost, month_cost = calculate_totals_by_date(costs, date, False)
+
+    categories = process_cost_categories(costs, date)
+    total_capital = total_income - total_cost
+    delta = month_income - month_cost
+
+    print(f"Your statistics on {day:02d}-{month:02d}-{year:04d}:")
+    print_period_stats(total_capital, month_income, month_cost, delta)
+    print_category_stats(categories)
 
 
 def find_erorr_income(details: list[str]) -> bool:
