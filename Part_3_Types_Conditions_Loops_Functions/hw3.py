@@ -62,7 +62,7 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     month = int(parts[1])
     year = int(parts[2])
     if is_correct_day(day, month, year):
-        return day, month, year
+        return year, month, day
     return None
 
 
@@ -100,16 +100,15 @@ def format_detail_amount(value: float) -> str:
 
 def get_incomes(
     date: tuple[int, int, int],
-    incomes: list[tuple[float, int, int, int]]
+    incomes: list[tuple[float, tuple[int, int, int]]]
 ) -> tuple[float, float]:
-    day, month, year = date
     total_capital: float = 0
     month_income: float = 0
 
     for item in incomes:
-        if (item[3], item[2], item[1]) <= (year, month, day):
+        if item[1] <= date:
             total_capital += item[0]
-            if item[3] == year or item[2] == month:
+            if item[1][0] == date[0] or item[1][1] == date[1]:
                 month_income += item[0]
     return total_capital, month_income
 
@@ -122,20 +121,19 @@ def update_category_cost(category_cost: dict, category: str, amount: float) -> N
 
 def get_cost(
     date: tuple[int, int, int],
-    costs: list[tuple[str, float, int, int, int]]
+    costs: list[tuple[str, float, tuple[int, int, int]]]
 ) -> tuple[float, float, dict[Any, Any]]:
-    day, month, year = date
     total_capital: float = 0
     month_cost: float = 0
     category_cost = {}
 
-    for category, amount, cur_day, cur_month, cur_year in costs:
-        if (cur_year, cur_month, cur_day) > (year, month, day):
+    for item in costs:
+        if item[2] > date:
             continue
-        total_capital += amount
-        if cur_year == year or cur_month == month:
-            month_cost += amount
-            update_category_cost(category_cost, category, amount)
+        total_capital += item[1]
+        if item[2][0] == date[0] or item[2][1] == date[1]:
+            month_cost += item[1]
+            update_category_cost(category_cost, item[0], item[1])
 
     return total_capital, month_cost, category_cost
 
@@ -146,7 +144,7 @@ def print_stats_month(
     month_income: int,
     month_cost: int
 ) -> None:
-    day, month, year = date
+    year, month, day = date
     print(f"Your statistics on {day:02d}-{month:02d}-{year:04d}:")
     print(f"Total capital: {total_capital:.2f} рублей")
     delta = month_income - month_cost
@@ -176,8 +174,8 @@ def print_category_stats(category_cost: dict[str, float]) -> None:
 
 def print_stats(
     date: tuple[int, int, int],
-    incomes: list[tuple[float, int, int, int]],
-    costs: list[tuple[str, float, int, int, int]]
+    incomes: list[tuple[float, tuple[int, int, int]]],
+    costs: list[tuple[str, float, tuple[int, int, int]]]
 ) -> None:
     total_income, month_income = get_incomes(date, incomes)
     total_cost, month_cost, category_cost = get_cost(date, costs)
@@ -247,8 +245,7 @@ def main() -> None:
         if command == "income" and not find_erorr_income(details):
             amount = extract_amount(details[1])
             date = extract_date(details[2])
-            day, month, year = date
-            incomes.append((amount, day, month, year))
+            incomes.append((amount, date))
             print(OP_SUCCESS_MSG)
             continue
 
@@ -256,8 +253,7 @@ def main() -> None:
             category_name = details[1]
             amount = extract_amount(details[2])
             date = extract_date(details[3])
-            day, month, year = date
-            costs.append((category_name, amount, day, month, year))
+            costs.append((category_name, amount, date))
             print(OP_SUCCESS_MSG)
             continue
 
