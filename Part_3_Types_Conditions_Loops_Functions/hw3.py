@@ -43,9 +43,9 @@ class Date:
             return self.month < other.month
         return self.day <= other.day
 
-    def __eq__(self, other: "Date") -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Date):
-            return False
+            return NotImplemented
         return (self.year == other.year and
                 self.month == other.month and
                 self.day == other.day)
