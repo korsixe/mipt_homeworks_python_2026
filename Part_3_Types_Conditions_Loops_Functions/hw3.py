@@ -12,14 +12,11 @@ k12 = 12
 
 
 def is_leap_year(year: int) -> bool:
-    """
-    Для заданного года определяет: високосный (True) или невисокосный (False).
-
-    :param int year: Проверяемый год
-    :return: Значение високосности.
-    :rtype: bool
-    """
-    return (year % 4 == 0) and (year % 100 != 0 or year % 400 == 0)
+    if year % 4 != 0:
+        return False
+    if year % 100 != 0:
+        return True
+    return year % 400 == 0
 
 
 def is_invalid_category(maybe_category: str) -> bool:
@@ -27,7 +24,7 @@ def is_invalid_category(maybe_category: str) -> bool:
 
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
-    days_in_mounth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    day_in_mounth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
     parts = maybe_dt.split("-")
     if len(parts) != k3:
@@ -41,9 +38,9 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     if day < 1:
         return None
     if is_leap_year(year):
-        days_in_mounth[1] += 1
+        day_in_mounth[1] += 1
 
-    if day > days_in_mounth[month - 1]:
+    if day > day_in_mounth[month - 1]:
         return None
     return year, month, day
 
@@ -51,8 +48,8 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
 def extract_amount(maybe_amount: str) -> float | None:
     if not maybe_amount:
         return None
-
-    if maybe_amount.count(",") + maybe_amount.count(".") > 1:
+    maybe_amount = maybe_amount.replace(",", ".")
+    if maybe_amount.count(".") > 1:
         return None
 
     sign = 1
@@ -65,24 +62,10 @@ def extract_amount(maybe_amount: str) -> float | None:
     if not maybe_amount:
         return None
 
-    separate = False
-    integer = 0
-    fractional = 0
-
     for char in maybe_amount:
-        if char in [".", ","]:
-            separate = True
-        elif char.isdigit():
-            digit = ord(char) - ord("0")
-            if separate:
-                fractional = fractional * k10 + digit
-            else:
-                integer = integer * k10 + digit
-        else:
+        if char != "." or not char.isdigit():
             return None
-
-    return sign * (integer + fractional / 10 ** len(
-        str(fractional))) if fractional > 0 else sign * integer
+    return sign * float(maybe_amount)
 
 
 def income_handler(amount: float, income_date: str) -> str:
