@@ -149,7 +149,7 @@ def print_stats(date: tuple[int, int, int],
 
 
 def find_erorr_income(details: list[str]) -> bool:
-  if len(details) != 3:
+  if len(details) != k3:
     print(UNKNOWN_COMMAND_MSG)
     return True
 
@@ -166,7 +166,7 @@ def find_erorr_income(details: list[str]) -> bool:
 
 
 def find_error_cost(details: list[str]) -> bool:
-  if len(details) != 4:
+  if len(details) != k4:
     print(UNKNOWN_COMMAND_MSG)
     return True
 
@@ -191,37 +191,38 @@ def main() -> None:
   incomes = []
   costs = []
 
-  for line in open(0):
-    line = line.strip()
-    if not line:
-      print(UNKNOWN_COMMAND_MSG)
-      continue
-    details = line.split()
-    command = line[0]
-
-    if command == "income":
-      if not find_erorr_income(details):
-        amount = extract_amount(details[1])
-        date = extract_date(details[2])
-        day, month, year = date
-        incomes.append((amount, day, month, year))
-        print(OP_SUCCESS_MSG)
-
-    if command == "cost":
-      if not find_error_cost(details):
-        category_name = details[1]
-        amount = extract_amount(details[2])
-        date = extract_date(details[3])
-        day, month, year = date
-        costs.append((category_name, amount, day, month, year))
-        print(OP_SUCCESS_MSG)
-
-    if command == "stats":
-      date = extract_date(details[1])
-      if date is None:
-        print(INCORRECT_DATE_MSG)
+  with open(0) as file:
+    for line in file:
+      query = line.strip()
+      if not query:
+        print(UNKNOWN_COMMAND_MSG)
         continue
-      print_stats(date, incomes, costs)
+      details = query.split()
+      command = query[0]
+
+      if command == "income":
+        if not find_erorr_income(details):
+          amount = extract_amount(details[1])
+          date = extract_date(details[2])
+          day, month, year = date
+          incomes.append((amount, day, month, year))
+          print(OP_SUCCESS_MSG)
+
+      if command == "cost":
+        if not find_error_cost(details):
+          category_name = details[1]
+          amount = extract_amount(details[2])
+          date = extract_date(details[3])
+          day, month, year = date
+          costs.append((category_name, amount, day, month, year))
+          print(OP_SUCCESS_MSG)
+
+      if command == "stats":
+        date = extract_date(details[1])
+        if date is None:
+          print(INCORRECT_DATE_MSG)
+          continue
+        print_stats(date, incomes, costs)
 
 
 if __name__ == "__main__":
