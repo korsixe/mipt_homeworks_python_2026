@@ -105,7 +105,7 @@ def print_stats(date: tuple[int, int, int],
             if cur_year == year or cur_month == month:
                 month_cost += amount
                 if category not in category_cost:
-                    category_cost[category]:float = 0.0
+                    category_cost[category]: float = 0
                 category_cost[category] += amount
 
     delta = month_income - month_cost
@@ -128,7 +128,8 @@ def print_stats(date: tuple[int, int, int],
     sorted_categories = sorted(category_cost.keys())
     for idx, (category, amount) in enumerate(sorted_categories.items()):
         formatted_amount = format_detail_amount(amount)
-        print(f"{idx + 1}. {category}: {formatted_amount}")
+        line_index = idx + 1
+        print(f"{line_index}. {category}: {formatted_amount}")
 
 
 def find_erorr_income(details: list[str]) -> bool:
