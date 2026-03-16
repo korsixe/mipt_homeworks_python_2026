@@ -98,9 +98,9 @@ def print_stats(date: tuple[int, int, int],
     incomes: list[tuple[float, int, int, int]],
     costs: list[tuple[str, float, int, int, int]]) -> None:
     day, month, year = date
-    total_capital = 0.0
-    month_cost = 0.0
-    month_income = 0.0
+    total_capital = 0
+    month_cost = 0
+    month_income = 0
     category_cost = {}
 
     for amount, cur_day, cur_month, cur_year in incomes:
