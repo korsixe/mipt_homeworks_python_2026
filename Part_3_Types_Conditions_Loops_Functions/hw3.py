@@ -12,6 +12,13 @@ k12 = 12
 
 
 def is_leap_year(year: int) -> bool:
+    """
+        Для заданного года определяет: високосный (True) или невисокосный (False).
+        :param int year: Проверяемый год
+        :return: Значение високосности.
+        :return: True, если 366, иначе False.
+        :rtype: bool
+        """
     if year % 4 != 0:
         return False
     if year % 100 != 0:
@@ -98,7 +105,7 @@ def print_stats(date: tuple[int, int, int],
             if cur_year == year or cur_month == month:
                 month_cost += amount
                 if category not in category_cost:
-                    category_cost[category] = 0.0
+                    category_cost[category]:float = 0.0
                 category_cost[category] += amount
 
     delta = month_income - month_cost
@@ -106,9 +113,12 @@ def print_stats(date: tuple[int, int, int],
     print(f"Total capital: {total_capital:.2f} рублей")
 
     if delta >= 0:
-        print(f"In this month the profit was {delta:.2f} рублей")
+        formatted_delta = f"{delta:.2f}"
+        print(f"In this month the profit was {formatted_delta} рублей")
     else:
-        print(f"In this month the loss was {(-delta):.2f} рублей")
+        loss_amount = -delta
+        formatted_loss = f"{loss_amount:.2f}"
+        print(f"In this month the loss was {formatted_loss} рублей")
 
     print(f"Income: {month_income:.2f} рублей")
     print(f"Cost: {month_cost:.2f} рублей")
@@ -116,10 +126,9 @@ def print_stats(date: tuple[int, int, int],
     print("Details (category: sum):")
 
     sorted_categories = sorted(category_cost.keys())
-    for index in range(len(sorted_categories)):
-        category = sorted_categories[index]
-        print(
-            f"{index + 1}. {category}: {format_detail_amount(sorted_categories[category])}")
+    for idx, (category, amount) in enumerate(sorted_categories.items()):
+        formatted_amount = format_detail_amount(amount)
+        print(f"{idx + 1}. {category}: {formatted_amount}")
 
 
 def find_erorr_income(details: list[str]) -> bool:
