@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from dataclasses import dataclass
+
 UNKNOWN_COMMAND_MSG = "Unknown command!"
 NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
 INCORRECT_DATE_MSG = "Invalid date!"
@@ -19,23 +21,11 @@ DAY_THIRTY_ONE = 31
 STATS_ARGS_COUNT = 2
 
 
+@dataclass(frozen=True)
 class Date:
-    def __init__(self, day: int, month: int, year: int) -> None:
-        self._day = day
-        self._month = month
-        self._year = year
-
-    @property
-    def day(self) -> int:
-        return self._day
-
-    @property
-    def month(self) -> int:
-        return self._month
-
-    @property
-    def year(self) -> int:
-        return self._year
+    day: int
+    month: int
+    year: int
 
     def __le__(self, other: "Date") -> bool:
         if self.year != other.year:
@@ -43,16 +33,6 @@ class Date:
         if self.month != other.month:
             return self.month < other.month
         return self.day <= other.day
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Date):
-            return NotImplemented
-        return (self.year == other.year and
-                self.month == other.month and
-                self.day == other.day)
-
-    def __hash__(self) -> int:
-        return hash((self.year, self.month, self.day))
 
     def same_month(self, other: "Date") -> bool:
         return self.year == other.year and self.month == other.month
@@ -69,6 +49,10 @@ class Cost:
         self.category = category
         self.amount = amount
         self.date = date
+
+
+CategoryTotals = dict[str, float]
+CostSummary = tuple[float, float, CategoryTotals]
 
 
 def is_leap_year(year: int) -> bool:
@@ -158,7 +142,7 @@ def _process_cost_item(
     date: Date,
     total: float,
     monthly: float,
-    by_cat: dict[str, float]
+    by_cat: dict[str, float],
 ) -> tuple[float, float]:
     total += cst.amount
     if cst.date.same_month(date):
@@ -167,10 +151,10 @@ def _process_cost_item(
     return total, monthly
 
 
-def sum_costs(date: Date, costs: list[Cost]) -> tuple[float, float, dict[str, float]]:
+def sum_costs(date: Date, costs: list[Cost]) -> CostSummary:
     total: float = 0
     monthly: float = 0
-    by_cat = {}
+    by_cat: CategoryTotals = {}
     for cst in costs:
         if cst.date <= date:
             total, monthly = _process_cost_item(cst, date, total, monthly, by_cat)
@@ -216,18 +200,16 @@ def show_category_breakdown(cat_data: dict[str, float]) -> None:
     if not cat_data:
         return
     sorted_cats = sorted(cat_data.items())
-    for pos, (cat, val) in enumerate(sorted_cats):
-        index = pos + 1
-        formatted = format_detail_amount(val)
-        print(f"{index}. {cat}: {formatted}")
+    for index, (cat, val) in enumerate(sorted_cats, start=1):
+        print(f"{index}. {cat}: {format_detail_amount(val)}")
 
 
 def show_full_stats(dt: Date, inc_list: list[Income], cst_list: list[Cost]) -> None:
-    total_inc, month_inc = sum_incomes(dt, inc_list)
-    total_cost, month_cost, cats = sum_costs(dt, cst_list)
-    capital = total_inc - total_cost
-    display_monthly_stats(dt, capital, month_inc, month_cost)
-    show_category_breakdown(cats)
+    income_data = sum_incomes(dt, inc_list)
+    cost_data = sum_costs(dt, cst_list)
+    capital = income_data[0] - cost_data[0]
+    display_monthly_stats(dt, capital, income_data[1], cost_data[1])
+    show_category_breakdown(cost_data[2])
 
 
 def _check_income_len(details: list[str]) -> bool:
@@ -308,25 +290,32 @@ def handle_stats(details: list[str], inc_list: list[Income], cst_list: list[Cost
     return True
 
 
+def _handle_command(
+    cmd: str,
+    tokens: list[str],
+    incomes: list[Income],
+    costs: list[Cost],
+) -> None:
+    if cmd == "income":
+        handle_income(tokens, incomes)
+    elif cmd == "cost":
+        handle_cost(tokens, costs)
+    elif cmd == "stats":
+        handle_stats(tokens, incomes, costs)
+    else:
+        print(UNKNOWN_COMMAND_MSG)
+
+
 def main() -> None:
-    incomes = []
-    costs = []
+    incomes: list[Income] = []
+    costs: list[Cost] = []
 
     while True:
         line = input().strip()
         if not line:
             break
         tokens = line.split()
-        cmd = tokens[0]
-
-        if cmd == "income":
-            handle_income(tokens, incomes)
-        elif cmd == "cost":
-            handle_cost(tokens, costs)
-        elif cmd == "stats":
-            handle_stats(tokens, incomes, costs)
-        else:
-            print(UNKNOWN_COMMAND_MSG)
+        _handle_command(tokens[0], tokens, incomes, costs)
 
 
 if __name__ == "__main__":
