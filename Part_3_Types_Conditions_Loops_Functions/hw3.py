@@ -142,7 +142,7 @@ def collect_cost_stats(
             if is_same_month(cost_date, date):
                 month_cost += amount
                 if category not in category_cost:
-                    category_cost[category]: float = 0
+                    category_cost[category] = float(0)
                 category_cost[category] += amount
 
     return total_cost, month_cost, category_cost
