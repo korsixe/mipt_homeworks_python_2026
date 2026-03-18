@@ -170,6 +170,7 @@ def print_date(date: Date) -> None:
     day, month, year = date
     print(f"Your statistics on {day:02d}-{month:02d}-{year:04d}:")
 
+
 def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
     income_stats = collect_income_stats(date, incomes)
     cost_stats = collect_cost_stats(date, costs)
