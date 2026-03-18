@@ -102,17 +102,17 @@ def format_detail_amount(value: float) -> str:
 
 
 def is_earlier(first_date: Date, second_date: Date) -> bool:
-    first_day, first_month, first_year = first_date
-    second_day, second_month, second_year = second_date
-    return (first_year, first_month, first_day) <= (
-        second_year,
-        second_month,
-        second_day,
+    return (first_date[2], first_date[1], first_date[0]) <= (
+        second_date[2],
+        second_date[1],
+        second_date[0],
     )
 
 
 def is_same_month(first_date: Date, second_date: Date) -> bool:
-    return first_date[1] == second_date[1] and first_date[2] == second_date[2]
+    if first_date[1] != second_date[1]:
+        return False
+    return first_date[2] == second_date[2]
 
 
 def collect_income_stats(date: Date, incomes: list[Income]) -> tuple[float, float]:
@@ -136,14 +136,14 @@ def collect_cost_stats(
     month_cost: float = 0
     category_cost: dict[str, float] = {}
 
-    for category, amount, cost_date in costs:
-        if is_earlier(cost_date, date):
-            total_cost += amount
-            if is_same_month(cost_date, date):
-                month_cost += amount
-                if category not in category_cost:
-                    category_cost[category] = float(0)
-                category_cost[category] += amount
+    for element_cost in costs:
+        if is_earlier(element_cost[2], date):
+            total_cost += element_cost[1]
+            if is_same_month(element_cost[2], date):
+                month_cost += element_cost[1]
+                if element_cost[0] not in category_cost:
+                    category_cost[element_cost[0]] = float(0)
+                category_cost[element_cost[0]] += element_cost[1]
 
     return total_cost, month_cost, category_cost
 
@@ -153,26 +153,30 @@ def print_delta(month_income: float, month_cost: float) -> None:
     if delta >= 0:
         print(f"In this month the profit was {delta:.2f} рублей")
         return
-
-    print(f"In this month the loss was {-delta:.2f} рублей")
+    delta *= -1
+    print(f"In this month the loss was {delta:.2f} рублей")
 
 
 def print_category_stats(category_cost: dict[str, float]) -> None:
     print()
     print("Details (category: sum):")
-    for idx, (category, amount) in enumerate(sorted(category_cost.items()), start=1):
+    for idx, (category, amount) in enumerate(sorted(category_cost.items())):
         formatted_amount = format_detail_amount(amount)
-        print(f"{idx}. {category}: {formatted_amount}")
+        print_index = idx + 1
+        print(f"{print_index}. {category}: {formatted_amount}")
 
+
+def print_date(date: Date) -> None:
+    day, month, year = date
+    print(f"Your statistics on {day:02d}-{month:02d}-{year:04d}:")
 
 def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
     income_stats = collect_income_stats(date, incomes)
     cost_stats = collect_cost_stats(date, costs)
 
-    day, month, year = date
     total_capital = income_stats[0] - cost_stats[0]
 
-    print(f"Your statistics on {day:02d}-{month:02d}-{year:04d}:")
+    print_date(date)
     print(f"Total capital: {total_capital:.2f} рублей")
     print_delta(income_stats[1], cost_stats[1])
     print(f"Income: {income_stats[1]:.2f} рублей")
