@@ -6,7 +6,8 @@ INCORRECT_DATE_MSG = "Invalid date!"
 OP_SUCCESS_MSG = "Added"
 
 THIRTY_DAY_MONTHS = (4, 6, 9, 11)
-
+COMMAND = ("income", "cost", "stats")
+INDEX_FEBRUARY = 1
 k10 = 10
 LEN_DATE = 3
 LEN_INCOME = 3
@@ -20,6 +21,7 @@ DAY_THIRTY_ONE = 31
 Date = tuple[int, int, int]
 Income = tuple[float, Date]
 Cost = tuple[str, float, Date]
+
 
 def is_leap_year(year: int) -> bool:
     """
@@ -40,10 +42,8 @@ def is_invalid_category(maybe_category: str) -> bool:
     return "," in maybe_category or "." in maybe_category or " " in maybe_category
 
 
-def is_correct_day(year: int, month: int, day: int) -> bool:
-    if month < 1 or month > MONTH_IN_YEAR:
-        return False
-    if day < 1:
+def is_correct_day(day: int, month: int, year: int) -> bool:
+    if month < 1 or month > MONTH_IN_YEAR or day < 1:
         return False
 
     if month in THIRTY_DAY_MONTHS:
@@ -86,7 +86,7 @@ def extract_amount(maybe_amount: str) -> float | None:
         return None
 
     for char in maybe_amount:
-        if char != "." or not char.isdigit():
+        if char != "." and not char.isdigit():
             return None
     return sign * float(maybe_amount)
 
@@ -101,7 +101,6 @@ def format_detail_amount(value: float) -> str:
 
 
 def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
-
     day, month, year = date
     total_capital: float = 0
     month_cost: float = 0
@@ -187,39 +186,42 @@ def find_error_cost(details: list[str]) -> bool:
 
 
 def main() -> None:
-    incomes = []
-    costs = []
+    incomes: list[Income] = []
+    costs: list[Cost] = []
 
-    with open(0) as file:
-        for line in file:
-            query = line.strip()
-            if not query:
-                print(UNKNOWN_COMMAND_MSG)
+    while True:
+        line = input().strip()
+        if not line:
+            break
+        query = line.strip()
+        if not query:
+            print(UNKNOWN_COMMAND_MSG)
+            continue
+        details = query.split()
+        command = details[0]
+        if command not in COMMAND:
+            print(UNKNOWN_COMMAND_MSG)
+            continue
+
+        if command == "income" and not find_erorr_income(details):
+            amount = extract_amount(details[1])
+            date = extract_date(details[2])
+            incomes.append((amount, date))
+            print(OP_SUCCESS_MSG)
+
+        if command == "cost" and not find_error_cost(details):
+            category_name = details[1]
+            amount = extract_amount(details[2])
+            date = extract_date(details[3])
+            costs.append((category_name, amount, date))
+            print(OP_SUCCESS_MSG)
+
+        if command == "stats":
+            date = extract_date(details[1])
+            if date is None:
+                print(INCORRECT_DATE_MSG)
                 continue
-            details = query.split()
-            command = query[0]
-
-            if command == "income" and not find_erorr_income(details):
-                amount = extract_amount(details[1])
-                date = extract_date(details[2])
-                day, month, year = date
-                incomes.append((amount, day, month, year))
-                print(OP_SUCCESS_MSG)
-
-            if command == "cost" and not find_error_cost(details):
-                category_name = details[1]
-                amount = extract_amount(details[2])
-                date = extract_date(details[3])
-                day, month, year = date
-                costs.append((category_name, amount, day, month, year))
-                print(OP_SUCCESS_MSG)
-
-            if command == "stats":
-                date = extract_date(details[1])
-                if date is None:
-                    print(INCORRECT_DATE_MSG)
-                    continue
-                print_stats(date, incomes, costs)
+            print_stats(date, incomes, costs)
 
 
 if __name__ == "__main__":
