@@ -104,7 +104,7 @@ def format_detail_amount(value: float) -> str:
 def is_earlier(first_date: Date, second_date: Date) -> bool:
     first_day, first_month, first_year = first_date
     second_day, second_month, second_year = second_date
-    return (first_year, first_month, first_day) < (
+    return (first_year, first_month, first_day) <= (
         second_year,
         second_month,
         second_day,
