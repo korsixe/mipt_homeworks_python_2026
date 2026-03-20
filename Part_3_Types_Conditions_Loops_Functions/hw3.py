@@ -436,3 +436,12 @@ def main() -> None:
         line = input()
         if not line:
             break
+        details = line.split()
+        if not details or details[0] not in COMMAND:
+            print(UNKNOWN_COMMAND_MSG)
+            continue
+
+        process_command(details, incomes, costs)
+
+if __name__ == "__main__":
+    main()
