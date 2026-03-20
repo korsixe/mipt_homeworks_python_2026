@@ -33,9 +33,7 @@ Date = tuple[int, int, int]
 Income = tuple[float, Date]
 Cost = tuple[str, float, Date]
 
-financial_transactions_storage: list[dict[str, str | float | Date | None]] = [
-    {"amount": 0.0, "date": None}
-]
+financial_transactions_storage: list[dict[str, str | float | Date]] = []
 
 
 def is_leap_year(year: int) -> bool:
@@ -58,7 +56,6 @@ def is_invalid_category(maybe_category: str) -> bool:
         return True
 
     common_cat, specific_cat = maybe_category.split("::", 1)
-
     if common_cat not in EXPENSE_CATEGORIES:
         return True
     if specific_cat not in EXPENSE_CATEGORIES[common_cat]:
@@ -200,17 +197,22 @@ def split_storage() -> tuple[list[Income], list[Cost]]:
     costs: list[Cost] = []
 
     for transaction in financial_transactions_storage:
-        raw_date = transaction.get("date")
-        if not isinstance(raw_date, tuple):
-            continue
-
         amount = float(transaction["amount"])
+        raw_date = transaction["date"]
+
+        if isinstance(raw_date, tuple):
+            transaction_date = raw_date
+        else:
+            transaction_date = extract_date(str(raw_date))
+
+        if transaction_date is None:
+            continue
 
         if "category" in transaction:
             category_name = str(transaction["category"])
-            costs.append((category_name, amount, raw_date))
+            costs.append((category_name, amount, transaction_date))
         else:
-            incomes.append((amount, raw_date))
+            incomes.append((amount, transaction_date))
 
     return incomes, costs
 
@@ -286,6 +288,7 @@ def stats_handler(report_date: str) -> str:
     month_income = income_stats[1]
     month_cost = cost_stats[1]
     delta = month_income - month_cost
+
     lines: list[str] = [
         f"Your statistics on {date[0]:02d}-{date[1]:02d}-{date[2]:04d}:",
         f"Total capital: {total_capital:.2f} рублей",
