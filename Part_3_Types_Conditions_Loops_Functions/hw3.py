@@ -33,7 +33,7 @@ Date = tuple[int, int, int]
 Income = tuple[float, Date]
 Cost = tuple[str, float, Date]
 
-financial_transactions_storage: list[dict[str, str | float]] = []
+financial_transactions_storage: list[dict[str, str | float | Date]] = []
 
 
 def is_leap_year(year: int) -> bool:
@@ -137,12 +137,12 @@ def normalize_date(date: Date) -> str:
     return f"{day:02d}-{month:02d}-{year:04d}"
 
 
-def income_handler(amount: float, income_date: str) -> str:
+def income_handler(amount: float, income_date: Date) -> str:
     financial_transactions_storage.append({"amount": amount, "date": income_date})
     return OP_SUCCESS_MSG
 
 
-def cost_handler(category_name: str, amount: float, income_date: str) -> str:
+def cost_handler(category_name: str, amount: float, income_date: Date) -> str:
     financial_transactions_storage.append(
         {"category": category_name, "amount": amount, "date": income_date}
     )
@@ -178,15 +178,14 @@ def split_storage() -> tuple[list[Income], list[Cost]]:
 
     for transaction in financial_transactions_storage:
         amount = float(transaction["amount"])
-        transaction_date = extract_date(str(transaction["date"]))
-        if transaction_date is None:
+        if transaction["date"] is None:
             continue
 
         if "category" in transaction:
             category_name = str(transaction["category"])
-            costs.append((category_name, amount, transaction_date))
+            costs.append((category_name, amount, transaction["date"]))
         else:
-            incomes.append((amount, transaction_date))
+            incomes.append((amount, transaction["date"]))
 
     return incomes, costs
 
@@ -250,8 +249,7 @@ def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
     print(stats_handler(normalize_date(date)))
 
 
-def stats_handler(report_date: str) -> str:
-    date = extract_date(report_date)
+def stats_handler(date: Date) -> str:
     if date is None:
         return INCORRECT_DATE_MSG
 
@@ -337,7 +335,7 @@ def handle_income(details: list[str], incomes: list[Income]) -> None:
         return
 
     incomes.append((amount, date))
-    print(income_handler(amount, normalize_date(date)))
+    print(income_handler(amount, date))
 
 
 def handle_cost(details: list[str], costs: list[Cost]) -> None:
@@ -351,7 +349,7 @@ def handle_cost(details: list[str], costs: list[Cost]) -> None:
         return
 
     costs.append((category_name, amount, date))
-    print(cost_handler(category_name, amount, normalize_date(date)))
+    print(cost_handler(category_name, amount, date))
 
 
 def handle_stats(details: list[str], incomes: list[Income], costs: list[Cost]) -> None:
@@ -364,7 +362,7 @@ def handle_stats(details: list[str], incomes: list[Income], costs: list[Cost]) -
         print(INCORRECT_DATE_MSG)
         return
 
-    print(stats_handler(normalize_date(date)))
+    print(stats_handler(date))
 
 
 def process_command(
