@@ -138,25 +138,37 @@ def normalize_date(date: Date) -> str:
     return f"{day:02d}-{month:02d}-{year:04d}"
 
 
+def save_invalid_transaction() -> None:
+    financial_transactions_storage.append({"amount": 0.0, "date": ""})
+
+
 def income_handler(amount: float, income_date: str) -> str:
     parsed_date = extract_date(income_date)
 
     if amount <= 0:
+        save_invalid_transaction()
         return NONPOSITIVE_VALUE_MSG
-    if parsed_date is None:
-        return INCORRECT_DATE_MSG
 
+    if parsed_date is None:
+        save_invalid_transaction()
+        return INCORRECT_DATE_MSG
     financial_transactions_storage.append({"amount": amount, "date": parsed_date})
     return OP_SUCCESS_MSG
 
 
 def cost_handler(category_name: str, amount: float, income_date: str) -> str:
     parsed_date = extract_date(income_date)
+
     if is_invalid_category(category_name):
+        save_invalid_transaction()
         return NOT_EXISTS_CATEGORY
+
     if amount <= 0:
+        save_invalid_transaction()
         return NONPOSITIVE_VALUE_MSG
+
     if parsed_date is None:
+        save_invalid_transaction()
         return INCORRECT_DATE_MSG
 
     financial_transactions_storage.append(
