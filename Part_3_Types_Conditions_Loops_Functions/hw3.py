@@ -58,7 +58,7 @@ def is_invalid_category(maybe_category: str) -> bool:
     common_cat, specific_cat = maybe_category.split("::", 1)
     if common_cat not in EXPENSE_CATEGORIES:
         return True
-    if specific_cat not in EXPENSE_CATEGORIES[common_cat]:
+    if common_cat != "Other" and specific_cat not in EXPENSE_CATEGORIES[common_cat]:
         return True
 
     return False
