@@ -291,7 +291,7 @@ def find_erorr_income(details: list[str]) -> bool:
         return True
 
     amount = extract_amount(details[1])
-    if amount is None or amount <= 0:
+    if amount is None or amount < 0:
         print(NONPOSITIVE_VALUE_MSG)
         return True
 
@@ -315,7 +315,7 @@ def find_error_cost(details: list[str]) -> bool:
         return True
 
     amount = extract_amount(details[2])
-    if amount is None or amount <= 0:
+    if amount is None or amount < 0:
         print(NONPOSITIVE_VALUE_MSG)
         return True
 
