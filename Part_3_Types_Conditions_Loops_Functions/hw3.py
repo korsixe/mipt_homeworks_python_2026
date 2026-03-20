@@ -342,11 +342,12 @@ def handle_cost(details: list[str], costs: list[Cost]) -> None:
     if find_error_cost(details):
         return
 
-    category_name = details[1]
+    category_name = details[1].split("::", 1)[0]
     amount = extract_amount(details[2])
     date = extract_date(details[3])
     if amount is None or date is None:
         return
+
 
     costs.append((category_name, amount, date))
     print(cost_handler(category_name, amount, date))
