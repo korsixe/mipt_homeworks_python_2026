@@ -209,22 +209,18 @@ def split_storage() -> tuple[list[Income], list[Cost]]:
     costs: list[Cost] = []
 
     for transaction in financial_transactions_storage:
-        amount = float(transaction["amount"])
         raw_date = transaction["date"]
 
-        if isinstance(raw_date, tuple):
-            transaction_date = raw_date
-        else:
-            transaction_date = extract_date(str(raw_date))
+        transaction_date = raw_date if isinstance(raw_date,tuple) else extract_date(str(raw_date))
 
         if transaction_date is None:
             continue
 
         if "category" in transaction:
             category_name = str(transaction["category"])
-            costs.append((category_name, amount, transaction_date))
+            costs.append((category_name, transaction["amount"], transaction_date))
         else:
-            incomes.append((amount, transaction_date))
+            incomes.append((transaction["amount"], transaction_date))
 
     return incomes, costs
 
@@ -284,7 +280,7 @@ def print_date(date: Date) -> None:
     print(f"Your statistics on {day:02d}-{month:02d}-{year:04d}:")
 
 
-def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
+def print_stats(date: Date) -> None:
     print(stats_handler(normalize_date(date)))
 
 
@@ -391,7 +387,7 @@ def handle_cost(details: list[str], costs: list[Cost]) -> None:
     print(cost_handler(category_name, amount, normalize_date(date)))
 
 
-def handle_stats(details: list[str], incomes: list[Income], costs: list[Cost]) -> None:
+def handle_stats(details: list[str]) -> None:
     if len(details) != LEN_INCOME - 1:
         print(UNKNOWN_COMMAND_MSG)
         return
@@ -416,7 +412,7 @@ def process_command(
     elif command == "cost":
         handle_cost(details, costs)
     elif command == "stats":
-        handle_stats(details, incomes, costs)
+        handle_stats(details)
     else:
         print(UNKNOWN_COMMAND_MSG)
 
