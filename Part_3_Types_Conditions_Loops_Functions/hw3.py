@@ -260,7 +260,7 @@ def collect_cost_stats(
             if is_same_month(cost_date, date):
                 month_cost += amount
                 if category_name not in category_cost:
-                    category_cost[category_name] = 0.0
+                    category_cost[category_name] = float(0)
                 category_cost[category_name] += amount
 
     return total_cost, month_cost, category_cost
@@ -288,8 +288,7 @@ def print_date(date: Date) -> None:
     print(f"Your statistics on {day:02d}-{month:02d}-{year:04d}:")
 
 
-def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
-    _ = incomes, costs
+def print_stats(date: Date) -> None:
     print(stats_handler(normalize_date(date)))
 
 
@@ -396,8 +395,7 @@ def handle_cost(details: list[str], costs: list[Cost]) -> None:
     print(cost_handler(category_name, amount, normalize_date(date)))
 
 
-def handle_stats(details: list[str], incomes: list[Income], costs: list[Cost]) -> None:
-    _ = incomes, costs
+def handle_stats(details: list[str]) -> None:
 
     if len(details) != LEN_INCOME - 1:
         print(UNKNOWN_COMMAND_MSG)
@@ -423,7 +421,7 @@ def process_command(
     elif command == "cost":
         handle_cost(details, costs)
     elif command == "stats":
-        handle_stats(details, incomes, costs)
+        handle_stats(details)
     else:
         print(UNKNOWN_COMMAND_MSG)
 
@@ -442,6 +440,7 @@ def main() -> None:
             continue
 
         process_command(details, incomes, costs)
+
 
 if __name__ == "__main__":
     main()
