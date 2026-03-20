@@ -54,12 +54,13 @@ def is_leap_year(year: int) -> bool:
 def is_invalid_category(maybe_category: str) -> bool:
     if "::" not in maybe_category:
         return True
-    common_cat, specific_cat = maybe_category.split("::", 1)
 
+    common_cat, specific_cat = maybe_category.split("::", 1)
     if common_cat not in EXPENSE_CATEGORIES:
         return True
     if specific_cat not in EXPENSE_CATEGORIES[common_cat]:
         return True
+
     return False
 
 
@@ -137,20 +138,39 @@ def normalize_date(date: Date) -> str:
     return f"{day:02d}-{month:02d}-{year:04d}"
 
 
-def income_handler(amount: float, income_date: Date) -> str:
-    financial_transactions_storage.append({"amount": amount, "date": income_date})
+def income_handler(amount: float, income_date: str) -> str:
+    parsed_date = extract_date(income_date)
+
+    if amount <= 0:
+        return NONPOSITIVE_VALUE_MSG
+    if parsed_date is None:
+        return INCORRECT_DATE_MSG
+
+    financial_transactions_storage.append({"amount": amount, "date": parsed_date})
     return OP_SUCCESS_MSG
 
 
-def cost_handler(category_name: str, amount: float, income_date: Date) -> str:
+def cost_handler(category_name: str, amount: float, income_date: str) -> str:
+    parsed_date = extract_date(income_date)
+    if is_invalid_category(category_name):
+        return NOT_EXISTS_CATEGORY
+    if amount <= 0:
+        return NONPOSITIVE_VALUE_MSG
+    if parsed_date is None:
+        return INCORRECT_DATE_MSG
+
     financial_transactions_storage.append(
-        {"category": category_name, "amount": amount, "date": income_date}
+        {"category": category_name, "amount": amount, "date": parsed_date}
     )
     return OP_SUCCESS_MSG
 
 
 def cost_categories_handler() -> str:
-    return "\n".join(EXPENSE_CATEGORIES.keys())
+    result: list[str] = []
+    for common_cat, subcategories in EXPENSE_CATEGORIES.items():
+        for subcategory in subcategories:
+            result.append(f"{common_cat}::{subcategory}")
+    return "\n".join(result)
 
 
 def format_detail_amount(value: float) -> str:
@@ -178,14 +198,21 @@ def split_storage() -> tuple[list[Income], list[Cost]]:
 
     for transaction in financial_transactions_storage:
         amount = float(transaction["amount"])
-        if transaction["date"] is None:
+        raw_date = transaction["date"]
+
+        if isinstance(raw_date, tuple):
+            transaction_date = raw_date
+        else:
+            transaction_date = extract_date(str(raw_date))
+
+        if transaction_date is None:
             continue
 
         if "category" in transaction:
             category_name = str(transaction["category"])
-            costs.append((category_name, amount, transaction["date"]))
+            costs.append((category_name, amount, transaction_date))
         else:
-            incomes.append((amount, transaction["date"]))
+            incomes.append((amount, transaction_date))
 
     return incomes, costs
 
@@ -217,7 +244,7 @@ def collect_cost_stats(
             if is_same_month(cost_date, date):
                 month_cost += amount
                 if category_name not in category_cost:
-                    category_cost[category_name] = float(0)
+                    category_cost[category_name] = 0.0
                 category_cost[category_name] += amount
 
     return total_cost, month_cost, category_cost
@@ -249,14 +276,14 @@ def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
     print(stats_handler(normalize_date(date)))
 
 
-def stats_handler(date: Date) -> str:
+def stats_handler(report_date: str) -> str:
+    date = extract_date(report_date)
     if date is None:
         return INCORRECT_DATE_MSG
 
     incomes, costs = split_storage()
     income_stats = collect_income_stats(date, incomes)
     cost_stats = collect_cost_stats(date, costs)
-
     total_capital = income_stats[0] - cost_stats[0]
     month_income = income_stats[1]
     month_cost = cost_stats[1]
@@ -289,7 +316,7 @@ def find_erorr_income(details: list[str]) -> bool:
         return True
 
     amount = extract_amount(details[1])
-    if amount is None or amount < 0:
+    if amount is None or amount <= 0:
         print(NONPOSITIVE_VALUE_MSG)
         return True
 
@@ -313,7 +340,7 @@ def find_error_cost(details: list[str]) -> bool:
         return True
 
     amount = extract_amount(details[2])
-    if amount is None or amount < 0:
+    if amount is None or amount <= 0:
         print(NONPOSITIVE_VALUE_MSG)
         return True
 
@@ -335,22 +362,21 @@ def handle_income(details: list[str], incomes: list[Income]) -> None:
         return
 
     incomes.append((amount, date))
-    print(income_handler(amount, date))
+    print(income_handler(amount, normalize_date(date)))
 
 
 def handle_cost(details: list[str], costs: list[Cost]) -> None:
     if find_error_cost(details):
         return
 
-    category_name = details[1].split("::", 1)[0]
+    category_name = details[1]
     amount = extract_amount(details[2])
     date = extract_date(details[3])
     if amount is None or date is None:
         return
 
-
     costs.append((category_name, amount, date))
-    print(cost_handler(category_name, amount, date))
+    print(cost_handler(category_name, amount, normalize_date(date)))
 
 
 def handle_stats(details: list[str], incomes: list[Income], costs: list[Cost]) -> None:
@@ -363,7 +389,7 @@ def handle_stats(details: list[str], incomes: list[Income], costs: list[Cost]) -
         print(INCORRECT_DATE_MSG)
         return
 
-    print(stats_handler(date))
+    print(stats_handler(normalize_date(date)))
 
 
 def process_command(
