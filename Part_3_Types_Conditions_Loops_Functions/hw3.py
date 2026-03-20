@@ -219,11 +219,12 @@ def split_storage() -> tuple[list[Income], list[Cost]]:
         if transaction_date is None:
             continue
 
+        amount = float(transaction.get("amount"))
         category_value = transaction.get("category")
         if isinstance(category_value, str):
-            costs.append((category_value, float(transaction.get("amount")), transaction_date))
+            costs.append((category_value, amount, transaction_date))
         else:
-            incomes.append((float(transaction.get("amount")), transaction_date))
+            incomes.append((amount, transaction_date))
 
     return incomes, costs
 
