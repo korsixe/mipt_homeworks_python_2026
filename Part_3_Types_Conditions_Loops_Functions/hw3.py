@@ -127,10 +127,7 @@ def extract_amount(maybe_amount: str) -> float | None:
             return None
         has_digit = True
 
-    if not has_digit:
-        return None
-
-    return sign * float(maybe_amount)
+    return None if not has_digit else sign * float(maybe_amount)
 
 
 def normalize_date(date: Date) -> str:
@@ -208,10 +205,8 @@ def split_storage() -> tuple[list[Income], list[Cost]]:
     costs: list[Cost] = []
 
     for transaction in financial_transactions_storage:
-        amount_value = transaction.get("amount")
-        if not isinstance(amount_value, (int, float)):
+        if not isinstance(transaction.get("amount"), (int, float)):
             continue
-        amount = float(amount_value)
 
         raw_date = transaction.get("date")
         if isinstance(raw_date, tuple):
@@ -226,9 +221,9 @@ def split_storage() -> tuple[list[Income], list[Cost]]:
 
         category_value = transaction.get("category")
         if isinstance(category_value, str):
-            costs.append((category_value, amount, transaction_date))
+            costs.append((category_value, transaction.get("amount"), transaction_date))
         else:
-            incomes.append((amount, transaction_date))
+            incomes.append((transaction.get("amount"), transaction_date))
 
     return incomes, costs
 
