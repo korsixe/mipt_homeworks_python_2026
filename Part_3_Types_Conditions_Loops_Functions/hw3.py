@@ -32,8 +32,10 @@ DAY_THIRTY_ONE = 31
 Date = tuple[int, int, int]
 Income = tuple[float, Date]
 Cost = tuple[str, float, Date]
+TransactionValue = str | float | Date | None
+Transaction = dict[str, TransactionValue]
 
-financial_transactions_storage: list[dict[str, str | float | Date] | str] = []
+financial_transactions_storage: list[Transaction] = []
 
 
 def is_leap_year(year: int) -> bool:
@@ -58,10 +60,8 @@ def is_invalid_category(maybe_category: str) -> bool:
     common_cat, specific_cat = maybe_category.split("::", 1)
     if common_cat not in EXPENSE_CATEGORIES:
         return True
-    if common_cat != "Other" and specific_cat not in EXPENSE_CATEGORIES[common_cat]:
-        return True
 
-    return False
+    return specific_cat != "Other" and specific_cat not in EXPENSE_CATEGORIES[common_cat]
 
 
 def is_correct_day(day: int, month: int, year: int) -> bool:
@@ -180,8 +180,7 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 def cost_categories_handler() -> str:
     result: list[str] = []
     for common_cat, subcategories in EXPENSE_CATEGORIES.items():
-        for subcategory in subcategories:
-            result.append(f"{common_cat}::{subcategory}")
+        result.extend(f"{common_cat}::{subcategory}" for subcategory in subcategories)
     return "\n".join(result)
 
 
@@ -209,20 +208,25 @@ def split_storage() -> tuple[list[Income], list[Cost]]:
     costs: list[Cost] = []
 
     for transaction in financial_transactions_storage:
-        amount = float(transaction["amount"])
-        raw_date = transaction["date"]
+        amount_value = transaction.get("amount")
+        if not isinstance(amount_value, (int, float)):
+            continue
+        amount = float(amount_value)
 
+        raw_date = transaction.get("date")
         if isinstance(raw_date, tuple):
-            transaction_date = raw_date
+            transaction_date: Date | None = raw_date
+        elif isinstance(raw_date, str):
+            transaction_date = extract_date(raw_date)
         else:
-            transaction_date = extract_date(str(raw_date))
+            transaction_date = None
 
         if transaction_date is None:
             continue
 
-        if "category" in transaction:
-            category_name = str(transaction["category"])
-            costs.append((category_name, amount, transaction_date))
+        category_value = transaction.get("category")
+        if isinstance(category_value, str):
+            costs.append((category_value, amount, transaction_date))
         else:
             incomes.append((amount, transaction_date))
 
@@ -285,6 +289,7 @@ def print_date(date: Date) -> None:
 
 
 def print_stats(date: Date, incomes: list[Income], costs: list[Cost]) -> None:
+    _ = incomes, costs
     print(stats_handler(normalize_date(date)))
 
 
@@ -392,6 +397,8 @@ def handle_cost(details: list[str], costs: list[Cost]) -> None:
 
 
 def handle_stats(details: list[str], incomes: list[Income], costs: list[Cost]) -> None:
+    _ = incomes, costs
+
     if len(details) != LEN_INCOME - 1:
         print(UNKNOWN_COMMAND_MSG)
         return
@@ -429,14 +436,3 @@ def main() -> None:
         line = input()
         if not line:
             break
-
-        details = line.split()
-        if not details or details[0] not in COMMAND:
-            print(UNKNOWN_COMMAND_MSG)
-            continue
-
-        process_command(details, incomes, costs)
-
-
-if __name__ == "__main__":
-    main()
