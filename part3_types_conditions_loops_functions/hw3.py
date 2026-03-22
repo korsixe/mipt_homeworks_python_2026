@@ -101,7 +101,7 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     return None
 
 
-def extract_amount(maybe_amount: str) -> float | None:
+def prepare_amount(maybe_amount: str) -> tuple[int, str] | None:
     if not maybe_amount:
         return None
 
@@ -109,14 +109,37 @@ def extract_amount(maybe_amount: str) -> float | None:
     if normalized.count(".") > 1:
         return None
 
-    sign = -1 if normalized[0] == "-" else 1
+    sign = 1
     if normalized[0] in "+-":
+        sign = -1 if normalized[0] == "-" else 1
         normalized = normalized[1:]
 
-    if not normalized or not any(char.isdigit() for char in normalized):
+    if not normalized:
         return None
 
-    if any(not (char.isdigit() or char == ".") for char in normalized):
+    return sign, normalized
+
+
+def is_valid_amount_body(maybe_amount: str) -> bool:
+    has_digit = False
+
+    for char in maybe_amount:
+        if char == ".":
+            continue
+        if not char.isdigit():
+            return False
+        has_digit = True
+
+    return has_digit
+
+
+def extract_amount(maybe_amount: str) -> float | None:
+    prepared_amount = prepare_amount(maybe_amount)
+    if prepared_amount is None:
+        return None
+
+    sign, normalized = prepared_amount
+    if not is_valid_amount_body(normalized):
         return None
 
     return sign * float(normalized)
@@ -209,11 +232,13 @@ def append_transaction(
 ) -> None:
     amount_value = transaction.get("amount")
     transaction_date = extract_transaction_date(transaction)
+
     if not isinstance(amount_value, (int, float)) or transaction_date is None:
         return
 
     amount = float(amount_value)
     category_value = transaction.get("category")
+
     if isinstance(category_value, str):
         costs.append((category_value, amount, transaction_date))
         return
@@ -252,22 +277,52 @@ def collect_cost_stats(
     month_cost: float = 0
     category_cost: dict[str, float] = {}
 
-    for category_name, amount, cost_date in costs:
-        if is_earlier(cost_date, date):
-            total_cost += amount
-            if is_same_month(cost_date, date):
-                month_cost += amount
-                category_cost.setdefault(category_name, 0.0)
-                category_cost[category_name] += amount
+    for cost in costs:
+        if is_earlier(cost[2], date):
+            total_cost += cost[1]
+            if is_same_month(cost[2], date):
+                month_cost += cost[1]
+                category_cost.setdefault(cost[0], 0.0)
+                category_cost[cost[0]] += cost[1]
 
     return total_cost, month_cost, category_cost
 
 
 def build_delta_line(month_income: float, month_cost: float) -> str:
     delta = month_income - month_cost
-    result_word = "profit" if delta >= 0 else "loss"
-    result_amount = delta if delta >= 0 else -delta
-    return f"In this month the {result_word} was {result_amount:.2f} рублей"
+    delta_type = "profit"
+    delta_value = delta
+
+    if delta < 0:
+        delta_type = "loss"
+        delta_value = -delta
+
+    return f"In this month the {delta_type} was {delta_value:.2f} рублей"
+
+
+def build_title_line(date: Date) -> str:
+    return f"Your statistics on {normalize_date(date)}:"
+
+
+def build_total_capital_line(
+    income_stats: tuple[float, float],
+    cost_stats: tuple[float, float, dict[str, float]],
+) -> str:
+    total_capital = income_stats[0] - cost_stats[0]
+    return f"Total capital: {total_capital:.2f} рублей"
+
+
+def build_income_line(month_income: float) -> str:
+    return f"Income: {month_income:.2f} рублей"
+
+
+def build_cost_line(month_cost: float) -> str:
+    return f"Cost: {month_cost:.2f} рублей"
+
+
+def build_category_line(index: int, category: str, amount: float) -> str:
+    formatted_amount = format_detail_amount(amount)
+    return f"{index}. {category}: {formatted_amount}"
 
 
 def print_delta(month_income: float, month_cost: float) -> None:
@@ -277,47 +332,48 @@ def print_delta(month_income: float, month_cost: float) -> None:
 def print_category_stats(category_cost: dict[str, float]) -> None:
     print()
     print("Details (category: sum):")
-    for idx, (category, amount) in enumerate(sorted(category_cost.items()), start=1):
-        print(f"{idx}. {category}: {format_detail_amount(amount)}")
+
+    sorted_items = sorted(category_cost.items())
+    for idx, category_item in enumerate(sorted_items, start=1):
+        print(build_category_line(idx, category_item[0], category_item[1]))
 
 
 def print_date(date: Date) -> None:
-    print(f"Your statistics on {normalize_date(date)}:")
+    print(build_title_line(date))
 
 
 def print_stats(date: Date) -> None:
     print(stats_handler(normalize_date(date)))
 
 
-def build_stats_summary(date: Date) -> tuple[float, float, float, dict[str, float]]:
+def collect_stats(
+    date: Date,
+) -> tuple[tuple[float, float], tuple[float, float, dict[str, float]]]:
     incomes, costs = split_storage()
-    total_income, month_income = collect_income_stats(date, incomes)
-    total_cost, month_cost, category_cost = collect_cost_stats(date, costs)
-    return total_income - total_cost, month_income, month_cost, category_cost
+    return collect_income_stats(date, incomes), collect_cost_stats(date, costs)
 
 
 def add_category_lines(lines: list[str], category_cost: dict[str, float]) -> None:
-    for idx, (category, amount) in enumerate(sorted(category_cost.items()), start=1):
-        lines.append(f"{idx}. {category}: {format_detail_amount(amount)}")
+    sorted_items = sorted(category_cost.items())
+    for idx, category_item in enumerate(sorted_items, start=1):
+        lines.append(build_category_line(idx, category_item[0], category_item[1]))
 
 
 def build_stats_lines(
     date: Date,
-    total_capital: float,
-    month_income: float,
-    month_cost: float,
-    category_cost: dict[str, float],
+    income_stats: tuple[float, float],
+    cost_stats: tuple[float, float, dict[str, float]],
 ) -> list[str]:
     lines = [
-        f"Your statistics on {normalize_date(date)}:",
-        f"Total capital: {total_capital:.2f} рублей",
-        build_delta_line(month_income, month_cost),
-        f"Income: {month_income:.2f} рублей",
-        f"Cost: {month_cost:.2f} рублей",
+        build_title_line(date),
+        build_total_capital_line(income_stats, cost_stats),
+        build_delta_line(income_stats[1], cost_stats[1]),
+        build_income_line(income_stats[1]),
+        build_cost_line(cost_stats[1]),
         "",
         "Details (category: sum):",
     ]
-    add_category_lines(lines, category_cost)
+    add_category_lines(lines, cost_stats[2])
     return lines
 
 
@@ -326,10 +382,8 @@ def stats_handler(report_date: str) -> str:
     if date is None:
         return INCORRECT_DATE_MSG
 
-    total_capital, month_income, month_cost, category_cost = build_stats_summary(date)
-    return "\n".join(
-        build_stats_lines(date, total_capital, month_income, month_cost, category_cost)
-    )
+    income_stats, cost_stats = collect_stats(date)
+    return "\n".join(build_stats_lines(date, income_stats, cost_stats))
 
 
 def find_erorr_income(details: list[str]) -> bool:
@@ -390,7 +444,6 @@ def handle_income(details: list[str], incomes: list[Income]) -> None:
 def handle_cost(details: list[str], costs: list[Cost]) -> None:
     if find_error_cost(details):
         return
-
     category_name = details[1]
     amount = extract_amount(details[2])
     date = extract_date(details[3])
@@ -429,6 +482,7 @@ def process_command(
         handle_stats(details)
     else:
         print(UNKNOWN_COMMAND_MSG)
+
 
 def main() -> None:
     incomes: list[Income] = []
