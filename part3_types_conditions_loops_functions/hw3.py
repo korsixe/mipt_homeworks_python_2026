@@ -348,7 +348,7 @@ def print_stats(date: Date) -> None:
     print(stats_handler(normalize_date(date)))
 
 
-def collect_stats(date: Date,) -> tuple[Income_stats, Cost_stats]:
+def collect_stats(date: Date) -> tuple[Income_stats, Cost_stats]:
     incomes, costs = split_storage()
     return collect_income_stats(date, incomes), collect_cost_stats(date, costs)
 
