@@ -34,6 +34,8 @@ Income = tuple[float, Date]
 Cost = tuple[str, float, Date]
 TransactionValue = str | float | Date | None
 Transaction = dict[str, TransactionValue]
+Income_stats = tuple[float, float]
+Cost_stats = tuple[float, float, dict[str, float]]
 
 financial_transactions_storage: list[Transaction] = []
 
@@ -282,7 +284,7 @@ def collect_cost_stats(
             total_cost += cost[1]
             if is_same_month(cost[2], date):
                 month_cost += cost[1]
-                category_cost.setdefault(cost[0], 0.0)
+                category_cost.setdefault(cost[0], float(0))
                 category_cost[cost[0]] += cost[1]
 
     return total_cost, month_cost, category_cost
@@ -346,9 +348,7 @@ def print_stats(date: Date) -> None:
     print(stats_handler(normalize_date(date)))
 
 
-def collect_stats(
-    date: Date,
-) -> tuple[tuple[float, float], tuple[float, float, dict[str, float]]]:
+def collect_stats(date: Date,) -> tuple[Income_stats, Cost_stats]:
     incomes, costs = split_storage()
     return collect_income_stats(date, incomes), collect_cost_stats(date, costs)
 
