@@ -429,7 +429,8 @@ def process_command(
         handle_stats(details)
     else:
         print(UNKNOWN_COMMAND_MSG)
-[22.03.2026 13:11] Андрей: def main() -> None:
+
+def main() -> None:
     incomes: list[Income] = []
     costs: list[Cost] = []
 
