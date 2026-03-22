@@ -8,7 +8,7 @@ from faker import Faker
 from polyfactory.factories import DataclassFactory
 from polyfactory.pytest_plugin import register_fixture
 
-from Part_3_Types_Conditions_Loops_Functions import hw3
+from part3_types_conditions_loops_functions import hw3
 
 DATE_FORMAT = "%d-%m-%Y"
 
@@ -47,12 +47,12 @@ S_co = TypeVar("S_co", covariant=True)
 
 class IncomeBuilder[S_co](Protocol):
     def __call__(self, **kwargs: Unpack[IncomeKwargs]) -> S_co:
-        pass
+        ...
 
 
 class CostBuilder[S_co](Protocol):
     def __call__(self, **kwargs: Unpack[CostKwargs]) -> S_co:
-        pass
+        ...
 
 
 @register_fixture

@@ -57,7 +57,7 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 
 
 def cost_categories_handler() -> str:
-    return "\n".join(...)
+    return "\n".join({})
 
 
 def stats_handler(report_date: str) -> str:
