@@ -80,6 +80,7 @@ class LRUPolicy(Policy[K]):
     def has_keys(self) -> bool:
         return len(self._order) > 0
 
+
 @dataclass
 class LFUPolicy(Policy[K]):
     capacity: int = 5
