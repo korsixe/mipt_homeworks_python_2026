@@ -440,7 +440,6 @@ def process_command(details: list[str]) -> None:
 
 
 def main() -> None:
-
     while True:
         line = input()
         if not line:
