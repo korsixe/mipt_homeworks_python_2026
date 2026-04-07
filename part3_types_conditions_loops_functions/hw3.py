@@ -23,6 +23,7 @@ COMMAND = ("income", "cost", "stats")
 LEN_DATE = 3
 LEN_INCOME = 3
 LEN_STATS = 2
+LEN_COST_CATEGORIES = 2
 LEN_COST = 4
 MONTH_IN_YEAR = 12
 INDEX_FEBRUARY = 2
@@ -397,6 +398,10 @@ def handle_income(details: list[str]) -> None:
 
 
 def handle_cost(details: list[str]) -> None:
+    if len(details) == LEN_COST_CATEGORIES and details[1] == "categories":
+        print(cost_categories_handler())
+        return
+
     if find_error_cost(details):
         return
     category_name = details[1]
