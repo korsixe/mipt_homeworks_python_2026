@@ -312,9 +312,9 @@ def collect_stats(date: Date) -> tuple[IncomeStats, CostStats]:
 
 
 def add_category_lines(lines: list[str], category_cost: dict[str, float]) -> None:
-    for idx, (cat, cost) in enumerate(sorted(category_cost.items()), start=1):
+    sorted_items = sorted(category_cost.items())
+    for idx, (cat, cost) in enumerate(sorted_items, start=1):
         lines.append(f"{idx}. {cat}: {format_detail_amount(cost)}")
-
 
 def build_stats_lines(
     date: Date,
