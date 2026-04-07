@@ -316,6 +316,7 @@ def add_category_lines(lines: list[str], category_cost: dict[str, float]) -> Non
     for idx, (cat, cost) in enumerate(sorted_items, start=1):
         lines.append(f"{idx}. {cat}: {format_detail_amount(cost)}")
 
+
 def build_stats_lines(
     date: Date,
     income_stats: IncomeStats,
