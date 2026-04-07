@@ -265,7 +265,7 @@ def collect_cost_stats(date: Date, costs: list[Cost]) -> CostStats:
             total_cost += amount
             if is_same_month(cost_date, date):
                 month_cost += amount
-                category_cost.setdefault(category, 0.0)
+                category_cost.setdefault(category, float(0))
                 category_cost[category] += amount
 
     return total_cost, month_cost, category_cost
@@ -312,8 +312,8 @@ def collect_stats(date: Date) -> tuple[IncomeStats, CostStats]:
 
 
 def add_category_lines(lines: list[str], category_cost: dict[str, float]) -> None:
-    sorted_items = sorted(category_cost.items())
-    lines.extend(f"{idx}. {cat}: {format_detail_amount(cost)}" for idx, (cat, cost) in enumerate(sorted_items, start=1))
+    for idx, (cat, cost) in enumerate(sorted(category_cost.items()), start=1):
+        lines.append(f"{idx}. {cat}: {format_detail_amount(cost)}")
 
 
 def build_stats_lines(
