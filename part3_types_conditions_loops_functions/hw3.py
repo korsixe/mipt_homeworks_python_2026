@@ -219,8 +219,6 @@ def is_same_month(first_date: Date, second_date: Date) -> bool:
     return first_date[2] == second_date[2]
 
 
-
-
 def append_transaction(
     transaction: Transaction,
     incomes: list[Income],
@@ -261,13 +259,13 @@ def collect_cost_stats(date: Date, costs: list[Cost]) -> CostStats:
     month_cost: float = 0
     category_cost: dict[str, float] = {}
 
-    for cost in costs:
-        if is_earlier(cost[2], date):
-            total_cost += cost[1]
-            if is_same_month(cost[2], date):
-                month_cost += cost[1]
-                category_cost.setdefault(cost[0], float(0))
-                category_cost[cost[0]] += cost[1]
+    for category, amount, cost_date in costs:
+        if is_earlier(cost_date, date):
+            total_cost += amount
+            if is_same_month(cost_date, date):
+                month_cost += amount
+                category_cost.setdefault(category, 0.0)
+                category_cost[category] += amount
 
     return total_cost, month_cost, category_cost
 
