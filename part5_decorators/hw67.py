@@ -1,4 +1,4 @@
-import json
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import wraps
 from typing import Any, ParamSpec, Protocol, TypeVar
@@ -12,6 +12,12 @@ TOO_MUCH = "Too much requests, just wait."
 
 P = ParamSpec("P")
 R_co = TypeVar("R_co", covariant=True)
+
+
+@dataclass
+class _BreakerState:
+    error_count: int = 0
+    blocked_since: datetime | None = None
 
 
 class CallableWithMeta(Protocol[P, R_co]):
@@ -33,7 +39,7 @@ class CircuitBreaker:
         self,
         critical_count: int = 5,
         time_to_recover: int = 30,
-        need_error: type[Exception] = Exception,
+        triggers_on: type[Exception] = Exception,
     ) -> None:
         errors = []
         if not isinstance(critical_count, int) or critical_count <= 0:
@@ -45,41 +51,33 @@ class CircuitBreaker:
 
         self.critical_count = critical_count
         self.time_to_recover = time_to_recover
-        self.need_error = need_error
+        self.triggers_on = triggers_on
 
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         func_name = f"{func.__module__}.{func.__name__}"
-        state: list[Any] = [0, None]
+        state = _BreakerState()
 
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
-            return self._invoke(func, func_name, state, args, kwargs)
+            if state.blocked_since is not None:
+                self._raise_if_still_blocked(state.blocked_since, func_name)
+                state.error_count = 0
+                state.blocked_since = None
+            try:
+                result = func(*args, **kwargs)
+            except* self.triggers_on as exc_group:
+                state.error_count, state.blocked_since = self._count_error(state.error_count)
+                if state.blocked_since is not None:
+                    raise BreakerError(
+                        func_name=func_name,
+                        block_time=state.blocked_since,
+                    ) from exc_group.exceptions[0]
+                raise exc_group.exceptions[0]
+            else:
+                state.error_count = 0
+                return result
 
         return wrapper
-
-    def _invoke(
-        self,
-        func: CallableWithMeta[P, R_co],
-        func_name: str,
-        state: list[Any],
-        args: Any,
-        kwargs: Any,
-    ) -> R_co:
-        if state[1] is not None:
-            self._raise_if_still_blocked(state[1], func_name)
-            state[0] = 0
-            state[1] = None
-        try:
-            result = func(*args, **kwargs)
-        except Exception as exc:
-            if isinstance(exc, self.need_error):
-                state[0], state[1] = self._count_error(state[0])
-            if state[1] is not None:
-                raise BreakerError(func_name=func_name, block_time=state[1]) from exc
-            raise
-        else:
-            state[0] = 0
-            return result
 
     def _raise_if_still_blocked(self, block_time: datetime, func_name: str) -> None:
         elapsed = (datetime.now(UTC) - block_time).total_seconds()
