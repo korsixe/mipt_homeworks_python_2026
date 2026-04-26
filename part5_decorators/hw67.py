@@ -73,7 +73,7 @@ class CircuitBreaker:
                         func_name=func_name,
                         block_time=state.blocked_since,
                     ) from exc_group.exceptions[0]
-                raise exc_group.exceptions[0]
+                raise exc_group.exceptions[0] from None
             else:
                 state.error_count = 0
                 return result
