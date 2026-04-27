@@ -64,7 +64,8 @@ class CircuitBreaker:
             try:
                 result = func(*args, **kwargs)
             except self.triggers_on as exc:
-                self._handle_error(state, func_name, exc)
+                error = self._handle_error(state, func_name, exc)
+                raise error from exc
             else:
                 state.error_count = 0
                 return result
@@ -78,14 +79,14 @@ class CircuitBreaker:
         state.error_count = 0
         state.blocked_since = None
 
-    def _handle_error(self, state: _BreakerState, func_name: str, exc: Exception) -> None:
+    def _handle_error(self, state: _BreakerState, func_name: str, exc: Exception) -> Exception:
         state.error_count, state.blocked_since = self._count_error(state.error_count)
         if state.blocked_since is not None:
-            raise BreakerError(
+            return BreakerError(
                 func_name=func_name,
                 block_time=state.blocked_since,
-            ) from exc
-        raise exc from None
+            )
+        return exc
 
     def _raise_if_still_blocked(self, block_time: datetime, func_name: str) -> None:
         elapsed = (datetime.now(UTC) - block_time).total_seconds()
