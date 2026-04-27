@@ -60,10 +60,7 @@ class CircuitBreaker:
 
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
-            if state.blocked_since is not None:
-                self._raise_if_still_blocked(state.blocked_since, func_name)
-                state.error_count = 0
-                state.blocked_since = None
+            self._maybe_unblock(state, func_name)
             try:
                 result = func(*args, **kwargs)
             except self.triggers_on as exc:
@@ -79,6 +76,13 @@ class CircuitBreaker:
                 return result
 
         return wrapper
+
+    def _maybe_unblock(self, state: _BreakerState, func_name: str) -> None:
+        if state.blocked_since is None:
+            return
+        self._raise_if_still_blocked(state.blocked_since, func_name)
+        state.error_count = 0
+        state.blocked_since = None
 
     def _raise_if_still_blocked(self, block_time: datetime, func_name: str) -> None:
         elapsed = (datetime.now(UTC) - block_time).total_seconds()
