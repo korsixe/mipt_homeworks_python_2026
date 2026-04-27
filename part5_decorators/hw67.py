@@ -66,14 +66,14 @@ class CircuitBreaker:
                 state.blocked_since = None
             try:
                 result = func(*args, **kwargs)
-            except* self.triggers_on as exc_group:
+            except self.triggers_on as exc:
                 state.error_count, state.blocked_since = self._count_error(state.error_count)
                 if state.blocked_since is not None:
                     raise BreakerError(
                         func_name=func_name,
                         block_time=state.blocked_since,
-                    ) from exc_group.exceptions[0]
-                raise exc_group.exceptions[0] from None
+                    ) from exc
+                raise exc from None
             else:
                 state.error_count = 0
                 return result
