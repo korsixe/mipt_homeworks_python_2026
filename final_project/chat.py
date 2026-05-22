@@ -35,7 +35,7 @@ def _trim_and_get_content(
     limit_chars: int | None,
     limit_message: int | None,
 ) -> str:
-    if limit_message is not None:
+    if limit_message is not None and limit_message > 0:
         while len(history) >= limit_message:
             history.pop(0)
 

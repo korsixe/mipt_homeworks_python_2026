@@ -50,6 +50,9 @@ def load_config() -> dict[str, Any]:
         except (ValueError, TypeError):
             print('Ошибка: limit_message должен быть целым числом.')
             sys.exit(1)
+        if cfg['limit_message'] <= 0:
+            print('Ошибка: limit_message должен быть положительным числом.')
+            sys.exit(1)
     else:
         cfg.pop('limit_message', None)
 
