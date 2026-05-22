@@ -33,8 +33,8 @@ def _trim_and_get_content(
     history: list[dict[str, Any]],
     new_content: str,
     limit_chars: int | None,
-    limit_message: int | None)\
-    -> str:
+    limit_message: int | None,
+) -> str:
     if limit_message is not None:
         while len(history) >= limit_message:
             history.pop(0)
@@ -95,7 +95,7 @@ class ChatSession:
                 messages=cast(list[ChatCompletionMessageParam], messages),
                 temperature=self.cfg.get('temperature', 0.7),
             )
-            reply = response.choices[0].message.content
+            reply: str | None = response.choices[0].message.content
             self.history.append({'role': 'assistant', 'content': reply})
             return reply
         except KeyboardInterrupt:

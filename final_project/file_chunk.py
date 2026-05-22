@@ -42,7 +42,7 @@ def _split_by_paragraphs(text: str, n: int) -> list[str]:
 
 
 def _split_by_len(text: str, length: int) -> list[str]:
-    return [text[i:i + length] for i in range(0, len(text), length)]
+    return [text[i : i + length] for i in range(0, len(text), length)]
 
 
 def _parse_command(cmd: str) -> tuple[int | None, int | None, bool]:
