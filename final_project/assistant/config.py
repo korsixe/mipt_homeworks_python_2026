@@ -4,11 +4,13 @@ from typing import Any
 
 import yaml
 
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def load_config() -> dict[str, Any]:
     cfg: dict[str, Any] = {}
 
-    config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
+    config_path = os.path.join(_PROJECT_ROOT, 'config.yaml')
     if os.path.exists(config_path):
         try:
             with open(config_path, encoding='utf-8') as f:

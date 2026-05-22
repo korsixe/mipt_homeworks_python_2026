@@ -1,9 +1,9 @@
 import os
 import sys
 
-from chat import ChatSession
-from config import load_config
-from file_chunk import run_file_chunk
+from assistant.chat import ChatSession
+from assistant.config import load_config
+from assistant.file_chunk import run_file_chunk
 
 
 def clear_screen() -> None:
