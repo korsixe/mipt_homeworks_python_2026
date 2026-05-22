@@ -43,7 +43,7 @@ def main() -> None:
         reply = session.send(user_input)
         if reply is None:
             print('Запрос прерван. Введите новое сообщение.')
-        else:
+        elif not session.cfg.get('stream', False):
             print(f'>>> {reply}')
 
 

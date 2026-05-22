@@ -89,13 +89,30 @@ class ChatSession:
         self.history.append({'role': 'user', 'content': content})
         messages = self._build_messages()
 
+        streaming = bool(self.cfg.get('stream', False))
         try:
-            response = self.client.chat.completions.create(
-                model=self._get_model(),
-                messages=cast(list[ChatCompletionMessageParam], messages),
-                temperature=self.cfg.get('temperature', 0.7),
-            )
-            reply: str | None = response.choices[0].message.content
+            if streaming:
+                full_reply = ''
+                print('>>> ', end='', flush=True)
+                with self.client.chat.completions.create(
+                    model=self._get_model(),
+                    messages=cast(list[ChatCompletionMessageParam], messages),
+                    temperature=self.cfg.get('temperature', 0.7),
+                    stream=True,
+                ) as stream:
+                    for chunk in stream:
+                        delta = chunk.choices[0].delta.content or ''
+                        print(delta, end='', flush=True)
+                        full_reply += delta
+                print()
+                reply: str | None = full_reply
+            else:
+                response = self.client.chat.completions.create(
+                    model=self._get_model(),
+                    messages=cast(list[ChatCompletionMessageParam], messages),
+                    temperature=self.cfg.get('temperature', 0.7),
+                )
+                reply = response.choices[0].message.content
             self.history.append({'role': 'assistant', 'content': reply})
             return reply
         except KeyboardInterrupt:

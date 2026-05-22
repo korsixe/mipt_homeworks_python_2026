@@ -24,6 +24,7 @@ def load_config() -> dict[str, Any]:
         'LIMIT_CHARS': 'limit_chars',
         'LIMIT_MESSAGE': 'limit_message',
         'TEMPERATURE': 'temperature',
+        'STREAM': 'stream',
     }
     for env_var, key in env_map.items():
         val = os.environ.get(env_var)
@@ -60,5 +61,12 @@ def load_config() -> dict[str, Any]:
             sys.exit(1)
     else:
         cfg['temperature'] = 0.7
+
+    if 'stream' in cfg:
+        val = cfg['stream']
+        if not isinstance(val, bool):
+            cfg['stream'] = str(val).lower() in ('1', 'true', 'yes')
+    else:
+        cfg['stream'] = False
 
     return cfg
