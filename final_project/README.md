@@ -24,7 +24,7 @@ limit_chars:
 temperature: 0.7
 model: gemma3:270m
 system_prompt: You are a helpful AI assistant.
-stream: false - 'Поддержка streaming response для вывода ответов модели'
+stream: true - 'Поддержка streaming response для вывода ответов модели'
 ```
 
 4. Запуск
