@@ -10,9 +10,13 @@ def load_config() -> dict[str, Any]:
 
     config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
     if os.path.exists(config_path):
-        with open(config_path, encoding='utf-8') as f:
-            data = yaml.safe_load(f) or {}
-        cfg.update(data)
+        try:
+            with open(config_path, encoding='utf-8') as f:
+                data = yaml.safe_load(f) or {}
+            cfg.update(data)
+        except (OSError, yaml.YAMLError) as e:
+            print(f'Ошибка чтения config.yaml: {e}')
+            sys.exit(1)
 
     env_map = {
         'API_KEY': 'api_key',
@@ -32,15 +36,29 @@ def load_config() -> dict[str, Any]:
         sys.exit(1)
 
     if cfg.get('limit_chars') is not None:
-        cfg['limit_chars'] = int(cfg['limit_chars'])
+        try:
+            cfg['limit_chars'] = int(cfg['limit_chars'])
+        except (ValueError, TypeError):
+            print('Ошибка: limit_chars должен быть целым числом.')
+            sys.exit(1)
     else:
         cfg.pop('limit_chars', None)
+
     if cfg.get('limit_message') is not None:
-        cfg['limit_message'] = int(cfg['limit_message'])
+        try:
+            cfg['limit_message'] = int(cfg['limit_message'])
+        except (ValueError, TypeError):
+            print('Ошибка: limit_message должен быть целым числом.')
+            sys.exit(1)
     else:
         cfg.pop('limit_message', None)
+
     if cfg.get('temperature') is not None:
-        cfg['temperature'] = float(cfg['temperature'])
+        try:
+            cfg['temperature'] = float(cfg['temperature'])
+        except (ValueError, TypeError):
+            print('Ошибка: temperature должен быть числом (например, 0.7).')
+            sys.exit(1)
     else:
         cfg['temperature'] = 0.7
 

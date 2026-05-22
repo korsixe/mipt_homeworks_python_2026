@@ -1,7 +1,8 @@
 import os
+from collections.abc import Iterator
 from typing import Any
 
-from openai import OpenAI
+from openai import OpenAI, APIConnectionError, APIStatusError
 from openai.types.chat import ChatCompletionMessageParam
 
 MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -15,8 +16,12 @@ def _read_file(path: str) -> str | None:
     if os.path.getsize(path) > MAX_FILE_SIZE:
         print('Ошибка: файл превышает 5 МБ')
         return None
-    with open(path, encoding='utf-8') as f:
-        return f.read()
+    try:
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+    except (OSError, UnicodeDecodeError) as e:
+        print(f'Ошибка чтения файла: {e}')
+        return None
 
 
 def _split_by_paragraphs(text: str, n: int) -> list[str]:
@@ -48,16 +53,42 @@ def _parse_command(cmd: str) -> tuple[int | None, int | None, bool]:
     for part in cmd.split():
         if part.startswith('paragraph='):
             try:
-                paragraph = int(part.split('=')[1])
+                val = int(part.split('=')[1])
+                if val > 0:
+                    paragraph = val
             except ValueError:
                 pass
         elif part.startswith('len='):
             try:
-                length = int(part.split('=')[1])
+                val = int(part.split('=')[1])
+                if val > 0:
+                    length = val
             except ValueError:
                 pass
 
     return paragraph, length, auto
+
+
+def _stream_chunk(
+    client: OpenAI,
+    model: Any,
+    temperature: Any,
+    user_prompt: str,
+    chunk: str,
+) -> Iterator[str]:
+    messages: list[ChatCompletionMessageParam] = [
+        {'role': 'user', 'content': f'{user_prompt}\n\n{chunk}'}
+    ]
+    with client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        stream=True,
+    ) as stream:
+        for chunk_data in stream:
+            delta = chunk_data.choices[0].delta.content or ''
+            if delta:
+                yield delta
 
 
 def run_file_chunk(cmd: str, cfg: dict[str, Any]) -> None:
@@ -92,22 +123,19 @@ def run_file_chunk(cmd: str, cfg: dict[str, Any]) -> None:
                 print('Обработка файла прервана.')
                 return
 
-        messages: list[ChatCompletionMessageParam] = [{'role': 'user', 'content': f'{user_prompt}\n\n{chunk}'}]
         try:
             print('>>> ', end='', flush=True)
-            with client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                stream=True,
-            ) as stream:
-                for chunk_data in stream:
-                    delta = chunk_data.choices[0].delta.content or ''
-                    if delta:
-                        print(delta, end='', flush=True)
+            for token in _stream_chunk(client, model, temperature, user_prompt, chunk):
+                print(token, end='', flush=True)
             print()
         except KeyboardInterrupt:
             print('\nЗапрос прерван.')
+            if not auto:
+                continue
+            else:
+                return
+        except (APIStatusError, APIConnectionError) as e:
+            print(f'\nОшибка API: {e}')
             if not auto:
                 continue
             else:
