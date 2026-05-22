@@ -212,7 +212,6 @@ __marimo__/
 
 # MacOS
 .DS_Store
-
 final_project/config.yaml
 .*
 !.gitignore
