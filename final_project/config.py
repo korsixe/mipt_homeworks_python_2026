@@ -32,7 +32,6 @@ def load_config() -> dict[str, Any]:
 
     if not cfg.get('api_key') or not cfg.get('api_host'):
         print('Ошибка: не заданы api_key и/или api_host.')
-        print('Задайте переменные окружения API_KEY и API_HOST или создайте файл config.yaml.')
         sys.exit(1)
 
     if cfg.get('limit_chars') is not None:
@@ -57,7 +56,7 @@ def load_config() -> dict[str, Any]:
         try:
             cfg['temperature'] = float(cfg['temperature'])
         except (ValueError, TypeError):
-            print('Ошибка: temperature должен быть числом (например, 0.7).')
+            print('Ошибка: temperature должен быть числом.')
             sys.exit(1)
     else:
         cfg['temperature'] = 0.7

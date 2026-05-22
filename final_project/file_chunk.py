@@ -101,7 +101,7 @@ def run_file_chunk(cmd: str, cfg: dict[str, Any]) -> None:
     if text is None:
         return
 
-    print('Принято. Что нужно сделать для каждого фрагмента (User Prompt)?')
+    print('Принято. Что нужно сделать для каждого фрагмента?')
     user_prompt = input('>>> ').strip()
     print('Принято. Начинаю обработку:')
 

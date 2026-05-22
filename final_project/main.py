@@ -40,8 +40,11 @@ def main() -> None:
         if not user_input:
             continue
 
-        if session.send(user_input) is None:
+        reply = session.send(user_input)
+        if reply is None:
             print('Запрос прерван. Введите новое сообщение.')
+        else:
+            print(f'>>> {reply}')
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+import os
 import re
 from typing import Any, cast
 
@@ -14,7 +15,7 @@ def _attach_files(text: str) -> str:
     def replace(match: re.Match[str]) -> str:
         path = match.group(1).strip()
         try:
-            size = __import__('os').path.getsize(path)
+            size = os.path.getsize(path)
         except OSError:
             return f'[Ошибка: файл не найден: {path}]'
         if size > MAX_FILE_SIZE:
@@ -95,7 +96,6 @@ class ChatSession:
                 temperature=self.cfg.get('temperature', 0.7),
             )
             reply = response.choices[0].message.content
-            print(f'>>> {reply}')
             self.history.append({'role': 'assistant', 'content': reply})
             return reply
         except KeyboardInterrupt:
