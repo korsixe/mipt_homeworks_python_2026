@@ -75,7 +75,7 @@ class ChatSession:
         return msgs
 
     def _get_model(self) -> str:
-        return str(self.cfg.get('model', 'gpt-4o-mini'))
+        return str(self.cfg['model'])
 
     def send(self, user_input: str) -> str | None:
         content = _attach_files(user_input)

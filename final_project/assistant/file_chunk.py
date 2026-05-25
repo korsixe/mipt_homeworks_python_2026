@@ -113,7 +113,7 @@ def run_file_chunk(cmd: str, cfg: dict[str, Any]) -> None:
         chunks = _split_by_paragraphs(text, 1)
 
     client = OpenAI(api_key=cfg['api_key'], base_url=cfg['api_host'])
-    model = cfg.get('model', 'gpt-4o-mini')
+    model = cfg['model']
     temperature = cfg.get('temperature', 0.7)
 
     for chunk in chunks:

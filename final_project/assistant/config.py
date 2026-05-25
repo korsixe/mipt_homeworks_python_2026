@@ -23,6 +23,7 @@ def load_config() -> dict[str, Any]:
     env_map = {
         'API_KEY': 'api_key',
         'API_HOST': 'api_host',
+        'MODEL': 'model',
         'LIMIT_CHARS': 'limit_chars',
         'LIMIT_MESSAGE': 'limit_message',
         'TEMPERATURE': 'temperature',
@@ -35,6 +36,10 @@ def load_config() -> dict[str, Any]:
 
     if not cfg.get('api_key') or not cfg.get('api_host'):
         print('Ошибка: не заданы api_key и/или api_host.')
+        sys.exit(1)
+
+    if not cfg.get('model'):
+        print('Ошибка: не задана model.')
         sys.exit(1)
 
     if cfg.get('limit_chars') is not None:
