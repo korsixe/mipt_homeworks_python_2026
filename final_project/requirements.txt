@@ -1,0 +1,12 @@
+faker==40.13.0
+flake8==7.3.0
+librt==0.8.1
+mccabe==0.7.0
+mypy==1.20.0
+mypy-extensions==1.1.0
+pathspec==1.0.4
+polyfactory==3.3.0
+pycodestyle==2.14.0
+pyflakes==3.4.0
+ruff==0.14.13
+tzdata==2026.1
